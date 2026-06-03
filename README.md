@@ -9,7 +9,7 @@
 
 ---
 
-## 🔌 ESP32 Functions
+##  ESP32 Functions
 
 The ESP32 performs:
 
@@ -21,7 +21,7 @@ The ESP32 performs:
 
 ---
 
-## 📈 Dashboard Modules
+## Dashboard Modules
 
 ### Farmer Dashboard
 
@@ -42,7 +42,7 @@ The ESP32 performs:
 
 ---
 
-## 💡 Innovation Highlights
+## Innovation Highlights
 
 ✅ Digital Twin Concept
 
@@ -58,18 +58,8 @@ The ESP32 performs:
 
 ---
 
-## 🛠️ Future Enhancements
 
-- AI-based spoilage prediction
-- Machine learning analytics
-- Real blockchain integration
-- Mobile application
-- Cloud database storage
-- QR-based batch tracking
-
----
-
-## 👨‍💻 Developed For
+## Developed For
 
 Smart Agriculture & Post-Harvest Management
 
@@ -77,13 +67,13 @@ Hackathon / Academic Innovation Project
 
 ---
 
-## 📜 License
+## License
 
 This project is developed for educational and research purposes.
 
 ---
 
-## 🌟 Impact
+## Impact
 
 The Onion Digital Twin platform helps farmers:
 
