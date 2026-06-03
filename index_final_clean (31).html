@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Onion Twin">
+<meta name="theme-color" content="#0f1117">
+<title>Onion Digital Twin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--bg:#0f1117;--card:#1a1d27;--card2:#20243a;--border:#2a2d3e;--green:#22c55e;--blue:#3b82f6;--yellow:#f59e0b;--red:#ef4444;--text:#e2e8f0;--muted:#64748b;--white:#ffffff;--accent:#22c55e;--accent2:#16a34a;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-y:auto;}
+#page-farmer,#page-vendor{background-image:radial-gradient(circle,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:28px 28px;}
+
+/* ── LOGIN ─────────────────────────────────────────────── */
+#loginScreen{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;padding:20px;}
+#loginScreen::before{content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:500px;height:500px;background:radial-gradient(circle,rgba(34,197,94,0.06) 0%,transparent 70%);pointer-events:none;}
+.login-logo{text-align:center;position:relative;}
+.login-logo .emoji{font-size:56px;margin-bottom:14px;display:block;filter:drop-shadow(0 0 18px rgba(34,197,94,0.3));}
+.login-logo h1{font-size:24px;font-weight:700;color:var(--white);letter-spacing:0.5px;}
+.login-logo p{font-size:12px;color:var(--muted);margin-top:5px;letter-spacing:1px;}
+.lang-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.lang-btn{padding:7px 16px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;border:1px solid var(--border);background:var(--card);color:var(--muted);transition:all 0.2s;}
+.lang-btn.active,.lang-btn:hover{border-color:var(--green);color:var(--green);background:rgba(34,197,94,0.1);}
+.role-row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
+.role-card{width:170px;padding:26px 18px;text-align:center;cursor:pointer;background:var(--card);border:1px solid var(--border);border-radius:16px;transition:all 0.25s;position:relative;overflow:hidden;}
+.role-card::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity 0.25s;}
+.role-card.farmer::after{background:radial-gradient(circle at 50% 0%,rgba(34,197,94,0.08),transparent 70%);}
+.role-card.vendor::after{background:radial-gradient(circle at 50% 0%,rgba(59,130,246,0.08),transparent 70%);}
+.role-card:hover::after{opacity:1;}
+.role-card.farmer:hover{border-color:var(--green);transform:translateY(-4px);box-shadow:0 8px 24px rgba(34,197,94,0.15);}
+.role-card.vendor:hover{border-color:var(--blue);transform:translateY(-4px);box-shadow:0 8px 24px rgba(59,130,246,0.15);}
+.role-card .icon{font-size:36px;margin-bottom:10px;}
+.role-card .title{font-size:14px;font-weight:700;color:var(--white);letter-spacing:1px;}
+.role-card .sub{font-size:11px;color:var(--muted);margin-top:5px;}
+
+/* ── HEADER ─────────────────────────────────────────────── */
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:rgba(15,17,23,0.95);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;}
+.h-logo{display:flex;align-items:center;gap:10px;}
+.h-logo span{font-size:22px;}
+.h-logo h1{font-size:14px;font-weight:700;color:var(--white);}
+.h-logo p{font-size:10px;color:var(--muted);}
+.h-right{display:flex;align-items:center;gap:12px;}
+.h-role{font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;}
+.h-role.farmer{background:rgba(34,197,94,0.15);color:var(--green);}
+.h-role.vendor{background:rgba(59,130,246,0.15);color:var(--blue);}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1s infinite;box-shadow:0 0 6px rgba(34,197,94,0.6);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.h-time{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);}
+.logout-btn{padding:6px 14px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:600;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:var(--red);transition:all 0.2s;}
+.logout-btn:hover{background:rgba(239,68,68,0.18);}
+
+/* ── PAGES & CARDS ──────────────────────────────────────── */
+.page{display:none;padding:20px;max-width:1400px;margin:0 auto;}.page.active{display:block;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;transition:border-color 0.2s;position:relative;}
+.card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.card-title::before{content:'';display:inline-block;width:3px;height:13px;border-radius:3px;background:var(--ct,var(--blue));box-shadow:0 0 6px var(--ct,var(--blue));}
+.fg{display:grid;grid-template-columns:200px 1fr 190px;gap:14px;}
+.fg .hc{grid-row:1/3;}.fg .sc{grid-column:2;}.fg .slc{grid-row:1/3;grid-column:3;}.fg .cc{grid-column:2;}
+.bg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:14px;}
+.health-center{text-align:center;}
+.gw{position:relative;width:150px;height:150px;margin:8px auto;filter:drop-shadow(0 0 10px rgba(34,197,94,0.18));}
+.g-svg{width:150px;height:150px;transform:rotate(-90deg);}
+.g-bg{fill:none;stroke:var(--border);stroke-width:10;}
+.g-fill{fill:none;stroke-width:10;stroke-linecap:round;stroke-dasharray:377;stroke-dashoffset:377;transition:all 1s ease;}
+.g-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.g-num{font-size:38px;font-weight:700;font-family:'JetBrains Mono',monospace;}.g-pct{font-size:11px;color:var(--muted);}
+.risk-tag{display:inline-block;margin-top:10px;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;}
+.risk-low{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3);}
+.risk-med{background:rgba(245,158,11,0.15);color:var(--yellow);border:1px solid rgba(245,158,11,0.3);}
+.risk-high{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3);}
+.cbox{margin-top:14px;padding:12px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.2);border-radius:10px;font-size:12px;}
+.crow{display:flex;justify-content:space-between;margin-bottom:5px;}.cl{color:var(--muted);}
+.cv{font-family:'JetBrains Mono',monospace;font-size:11px;}.c-open{color:var(--green);font-weight:600;}.c-closed{color:var(--red);font-weight:600;}
+.sr{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.sb{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;transition:border-color 0.3s,box-shadow 0.3s;}
+.sb.warn{border-color:rgba(245,158,11,0.5);box-shadow:0 0 12px rgba(245,158,11,0.08);}
+.sb.danger{border-color:rgba(239,68,68,0.5);box-shadow:0 0 12px rgba(239,68,68,0.1);}
+.sn{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.sv{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700;margin:5px 0 2px;letter-spacing:-0.5px;}.su{font-size:11px;color:var(--muted);}
+.sbar{height:3px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden;}
+.sfill{height:100%;border-radius:2px;transition:width 1s ease;}.ssafe{font-size:10px;color:var(--muted);margin-top:4px;}
+.chart-area{height:130px;position:relative;}canvas{width:100%!important;height:100%!important;}
+.chart-legend{display:flex;gap:14px;margin-top:8px;font-size:11px;color:var(--muted);}
+.shelf-num{font-size:52px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--blue);text-align:center;}
+.shelf-unit{text-align:center;font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;}
+.shelf-bar{height:5px;background:var(--border);border-radius:3px;margin:12px 0 6px;overflow:hidden;}
+.shelf-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:3px;transition:width 1s;}
+.pbox{background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:12px;margin-top:12px;}
+.pr{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}.pl{color:var(--muted);}
+.pold{color:var(--red);font-family:'JetBrains Mono',monospace;}.pnew{color:var(--green);font-family:'JetBrains Mono',monospace;font-weight:600;}
+.pgain{text-align:center;font-size:11px;color:var(--green);margin-top:5px;font-weight:600;}
+.log-feed{max-height:150px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.log-item{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid rgba(42,45,62,0.7);font-size:12px;align-items:flex-start;}
+.log-time{font-family:'JetBrains Mono',monospace;color:var(--muted);font-size:10px;white-space:nowrap;}.log-msg{flex:1;}
+.log-heal{color:var(--green);}.log-warn{color:var(--yellow);}.log-info{color:var(--blue);}
+.demo-btn{width:100%;margin-top:10px;padding:9px;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;letter-spacing:0.5px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);color:var(--red);transition:all 0.2s;}
+.reset-btn{width:100%;margin-top:6px;padding:9px;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;letter-spacing:0.5px;background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.2);color:var(--green);transition:all 0.2s;}
+.abox{display:flex;align-items:center;gap:10px;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;transition:all 0.3s;}
+.abox.active{border-color:rgba(34,197,94,0.4);background:rgba(34,197,94,0.06);box-shadow:0 0 14px rgba(34,197,94,0.08);}.aicon{font-size:24px;}
+.ainfo{flex:1;}.aname{font-size:13px;font-weight:600;color:var(--white);}.asub{font-size:11px;color:var(--muted);}
+.abadge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:10px;}
+.bon{background:rgba(34,197,94,0.2);color:var(--green);}.boff{background:rgba(100,116,139,0.2);color:var(--muted);}
+.chain-item{padding:9px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.18);border-radius:8px;margin-bottom:7px;}
+.chain-hash{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue);}
+.chain-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px;}
+.chain-ok{color:var(--green);font-weight:600;}
+.mq-table{width:100%;border-collapse:collapse;font-size:12px;}
+.mq-table th{text-align:left;padding:8px 10px;color:var(--muted);font-size:10px;letter-spacing:1px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);}
+.mq-table td{padding:7px 10px;border-bottom:1px solid rgba(42,45,62,0.5);}
+.mq-table tr:nth-child(even){background:rgba(255,255,255,0.02);}
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;}
+.pill-high{background:rgba(34,197,94,0.15);color:var(--green);}.pill-med{background:rgba(245,158,11,0.15);color:var(--yellow);}
+.pill-low{background:rgba(100,116,139,0.15);color:var(--muted);}
+.vstats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;}
+.vstat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;position:relative;overflow:hidden;}
+.vstat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--green));opacity:0.5;}
+.vstat-num{font-size:38px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.vstat-lbl{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:5px;}.vstat-sub{font-size:11px;margin-top:5px;}
+/* ── VENDOR PAGE — Marketplace theme ──────────────────── */
+:root{--vbg:#0d0f1a;--vcard:#13162a;--vcard2:#1a1e35;--vborder:#252840;--vmuted:#6b7280;--vindigo:#6366f1;}
+#page-vendor{background:var(--vbg);min-height:calc(100vh - 56px);padding:20px;}
+.vbatches{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.vcard{background:var(--vcard);border:1px solid var(--vborder);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:0;position:relative;overflow:hidden;}
+.vcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#6366f1,#3b82f6);opacity:0.6;}
+.vcard-head{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:12px;border-bottom:1px solid var(--vborder);margin-bottom:12px;}
+.vpill-live{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3);padding:3px 10px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:0.5px;}
+.vpill-med{background:rgba(245,158,11,0.15);color:var(--yellow);border:1px solid rgba(245,158,11,0.3);padding:3px 10px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:0.5px;}
+.vsensor-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;}
+.vsensor{background:var(--vcard2);border-radius:8px;padding:8px 6px;text-align:center;border:1px solid var(--vborder);transition:border-color 0.2s;}
+.vsval{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:#fff;}
+.vslbl{font-size:9px;color:var(--vmuted);margin-top:2px;letter-spacing:0.5px;}
+.vcam-box{border-radius:10px;overflow:hidden;border:1px solid var(--vborder);background:#080a14;margin-bottom:10px;transition:border-color 0.2s;}
+.vcam-head{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid var(--vborder);font-size:10px;font-weight:600;color:var(--vmuted);letter-spacing:0.5px;}
+.vcam-wait-badge{font-size:10px;font-weight:600;color:var(--yellow);}
+.vcam-view{position:relative;width:100%;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;background:#060810;}
+.vcam-ph{text-align:center;line-height:1.8;}
+.vchain-details{border:1px solid var(--vborder);border-radius:8px;padding:0 10px;margin-bottom:10px;background:rgba(99,102,241,0.03);}
+.vchain-body{padding:6px 0;}
+.vchain-row{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;color:var(--vmuted);}
+.vchain-row span:last-child{color:#c7d2fe;font-family:'JetBrains Mono',monospace;font-size:10px;}
+.vbid-section{background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:12px;margin-top:4px;}
+.vinput-lbl{font-size:9px;color:var(--vmuted);margin-bottom:4px;letter-spacing:0.5px;}
+.vinput{width:100%;padding:9px 10px;background:var(--vcard2);border:1px solid var(--vborder);border-radius:8px;color:#fff;font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;box-sizing:border-box;}
+.vinput:focus{border-color:#6366f1;}
+.vtotal-box{background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:8px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.vbid-btn{width:100%;padding:12px;background:linear-gradient(135deg,#4f46e5,#6366f1);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s;box-shadow:0 4px 14px rgba(99,102,241,0.25);}
+.vbid-btn:hover{background:linear-gradient(135deg,#4338ca,#4f46e5);transform:translateY(-1px);}
+/* Bid leaderboard */
+#bids1,#bids2{display:flex;flex-direction:column;gap:4px;}
+.vbid-entry{display:grid;grid-template-columns:20px 1fr auto auto auto auto;gap:4px;align-items:center;padding:6px 8px;border-radius:7px;background:var(--vcard2);border:1px solid var(--vborder);font-size:11px;}
+.vbid-entry.my-bid{background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.35);}
+.vbid-rank{font-size:12px;}
+.vbid-name{color:#e2e8f0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vbid-price{font-family:'JetBrains Mono',monospace;color:var(--vmuted);font-size:10px;}
+.vbid-qty{font-family:'JetBrains Mono',monospace;color:var(--vmuted);font-size:10px;}
+.vbid-total{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;}
+.vbid-time{color:var(--vmuted);font-size:10px;text-align:right;}
+.vawait-bar{margin-top:10px;padding:10px;border-radius:8px;font-size:11px;font-weight:600;letter-spacing:0.5px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.25);color:var(--yellow);text-align:center;}
+/* ══════════════════════════════════════════
+   MOBILE RESPONSIVE
+   ══════════════════════════════════════════ */
+@media(max-width:900px){
+  .fg{grid-template-columns:1fr;}
+  .fg .hc,.fg .slc{grid-row:auto;grid-column:auto;}
+  .fg .sc,.fg .cc{grid-column:auto;}
+  .bg,.sr,.vstats{grid-template-columns:1fr 1fr;}
+  .vbatches{grid-template-columns:1fr;}
+  .bsensors{grid-template-columns:1fr 1fr 1fr;}
+}
+@media(max-width:600px){
+  .h-logo p,.h-time{display:none;}
+  header{padding:10px 14px;}
+  .h-logo h1{font-size:13px;} .h-logo span{font-size:18px;}
+  .h-right{gap:8px;} .logout-btn{padding:5px 10px;font-size:11px;}
+  .role-row{flex-direction:column;align-items:center;}
+  .role-card{width:85vw;max-width:320px;padding:22px 18px;}
+  .page{padding:12px;} #page-vendor{padding:12px;}
+  .fg,.bg,.sr{grid-template-columns:1fr;}
+  .fg .hc,.fg .slc,.fg .sc,.fg .cc{grid-row:auto;grid-column:auto;}
+  .sv{font-size:22px;} .vstat-num{font-size:28px;} .shelf-num{font-size:38px;}
+  .vstats{grid-template-columns:1fr 1fr;}
+  .vbatches{grid-template-columns:1fr;}
+  .vsensor-row{grid-template-columns:repeat(2,1fr);}
+  .bsensors{grid-template-columns:1fr 1fr 1fr;}
+  .vbid-entry{grid-template-columns:20px 1fr auto auto;gap:3px;}
+  .vbid-time{display:none;}
+  .mq-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .mq-table{min-width:400px;}
+  .chain-hash{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:88vw;}
+  .cam-box{margin-bottom:14px;}
+  #demo-reset-btn{position:fixed;bottom:16px;right:16px;width:auto!important;padding:10px 16px!important;border-radius:50px!important;font-size:11px!important;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.5);}
+  .vcard{padding:12px;} .vcard-head{padding-bottom:10px;margin-bottom:10px;}
+  .abox{padding:8px;} .aicon{font-size:20px;} .aname{font-size:12px;}
+  .vbid-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+}
+@media(max-width:400px){
+  .vstats{grid-template-columns:1fr;}
+  .vsensor-row,.bsensors{grid-template-columns:repeat(2,1fr);}
+  .sv{font-size:20px;} .card{padding:12px;}
+  .gw{width:130px;height:130px;} .g-svg{width:130px;height:130px;} .g-num{font-size:30px;}
+}
+
+.bpill{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;}
+.bp-live{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3);}
+.bp-med{background:rgba(245,158,11,0.15);color:var(--yellow);border:1px solid rgba(245,158,11,0.3);}
+.bsensors{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+.bsensor{background:var(--card2);border-radius:8px;padding:9px;text-align:center;}
+.bsval{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:600;color:var(--white);}.bslbl{font-size:10px;color:var(--muted);margin-top:2px;}
+.pvbox{background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:11px;margin-bottom:12px;}
+.pvtitle{font-size:10px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;}
+.pvrow{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;}
+.pvlbl{color:var(--muted);}.pvval{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text);}
+.bid-area label{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:7px;}
+.bid-row{display:flex;gap:8px;margin-bottom:8px;}
+.bid-input{flex:1;padding:9px 12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--white);font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;}
+.bid-input:focus{border-color:var(--blue);}
+.bid-btn{padding:9px 16px;background:var(--blue);border:none;border-radius:8px;color:var(--white);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.bid-btn:hover{background:#2563eb;}
+.bfeed{margin-bottom:10px;}
+.bentry{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.bvendor{color:var(--text);}.bamount{color:var(--green);font-family:'JetBrains Mono',monospace;font-weight:600;}.btime{color:var(--muted);}
+.confirm-btn{width:100%;padding:11px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.4);color:var(--green);transition:all 0.2s;}
+.confirm-btn:hover{background:rgba(34,197,94,0.2);}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:rgba(99,102,241,0.3);border-radius:2px;}
+/* mobile handled above */
+.cam-box{background:var(--card2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:18px;width:160px;}
+.cam-header{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-bottom:1px solid var(--border);}
+.cam-title{font-size:9px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.cam-status{font-size:9px;font-weight:600;}
+.cam-status.live{color:var(--green);animation:blink 1.5s infinite;}
+.cam-status.wait{color:var(--yellow);}
+.cam-img-wrap{width:100%;aspect-ratio:1/1;background:#0a0c14;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+#onionCamImg,#farmerCamImg{width:100%;height:100%;object-fit:cover;display:none;}
+.cam-placeholder{text-align:center;color:var(--muted);flex-direction:column;display:flex;align-items:center;}
+.cam-placeholder .cam-icon{font-size:44px;margin-bottom:10px;}
+.cam-placeholder p{font-size:12px;}
+.cam-placeholder small{font-size:10px;margin-top:6px;color:var(--border);}
+.cam-overlay{position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.75);padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600;color:var(--green);display:none;border:1px solid rgba(34,197,94,0.4);}
+.cam-footer{padding:5px 10px;font-size:9px;color:var(--muted);display:flex;justify-content:space-between;border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-logo">
+    <div class="emoji">
+      <svg width="72" height="80" viewBox="0 0 72 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- stem -->
+        <path d="M36 14 C34 8 35 3 36 0 C37 3 38 8 36 14" fill="#4a7c2f" stroke="#355a20" stroke-width="1"/>
+        <path d="M36 14 C30 10 26 5 28 2 C31 5 35 10 36 14" fill="#5a9438" stroke="#406a28" stroke-width="0.8"/>
+        <path d="M36 14 C42 10 46 5 44 2 C41 5 37 10 36 14" fill="#5a9438" stroke="#406a28" stroke-width="0.8"/>
+        <!-- outer skin layer (papery) -->
+        <ellipse cx="36" cy="46" rx="28" ry="32" fill="#c8780a" opacity="0.3"/>
+        <!-- main body -->
+        <ellipse cx="36" cy="47" rx="26" ry="30" fill="url(#og1)"/>
+        <!-- highlight -->
+        <ellipse cx="28" cy="36" rx="9" ry="12" fill="white" opacity="0.12" transform="rotate(-15 28 36)"/>
+        <!-- layer lines -->
+        <path d="M14 42 Q36 38 58 42" stroke="#b86008" stroke-width="1" fill="none" opacity="0.5"/>
+        <path d="M12 50 Q36 46 60 50" stroke="#b86008" stroke-width="1" fill="none" opacity="0.4"/>
+        <path d="M13 58 Q36 54 59 58" stroke="#b86008" stroke-width="1" fill="none" opacity="0.35"/>
+        <!-- root base -->
+        <ellipse cx="36" cy="76" rx="12" ry="4" fill="#8b4a06" opacity="0.6"/>
+        <path d="M30 76 Q28 80 26 78" stroke="#6b380a" stroke-width="1.2" fill="none"/>
+        <path d="M36 76 Q36 80 35 79" stroke="#6b380a" stroke-width="1.2" fill="none"/>
+        <path d="M42 76 Q44 80 46 78" stroke="#6b380a" stroke-width="1.2" fill="none"/>
+        <defs>
+          <radialGradient id="og1" cx="38%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#fad060"/>
+            <stop offset="40%" stop-color="#e8940c"/>
+            <stop offset="75%" stop-color="#c47008"/>
+            <stop offset="100%" stop-color="#8b4a04"/>
+          </radialGradient>
+        </defs>
+      </svg>
+    </div>
+    <h1 id="ll-title">ONION DIGITAL TWIN</h1>
+    <p id="ll-sub">Blockchain-Powered Storage Intelligence</p>
+  </div>
+  <div>
+    <p style="text-align:center;font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:10px" id="ll-lang">SELECT LANGUAGE</p>
+    <div class="lang-row">
+      <button class="lang-btn active" onclick="setLang('en',this)">🇬🇧 English</button>
+      <button class="lang-btn" onclick="setLang('hi',this)">🇮🇳 हिंदी</button>
+      <button class="lang-btn" onclick="setLang('kn',this)">🇮🇳 ಕನ್ನಡ</button>
+    </div>
+  </div>
+  <div class="role-row">
+    <div class="role-card farmer" onclick="login('farmer')">
+      <div class="icon">🌾</div>
+      <div class="title" id="ll-farmer">FARMER</div>
+      <div class="sub" id="ll-fsub">Monitor your storage</div>
+    </div>
+    <div class="role-card vendor" onclick="login('vendor')">
+      <div class="icon">🏪</div>
+      <div class="title" id="ll-vendor">VENDOR</div>
+      <div class="sub" id="ll-vsub">Browse &amp; bid on batches</div>
+    </div>
+  </div>
+</div>
+
+<header id="appHeader" style="display:none">
+  <div class="h-logo"><span><svg width="26" height="30" viewBox="0 0 72 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M36 14 C34 8 35 3 36 0 C37 3 38 8 36 14" fill="#4a7c2f"/><path d="M36 14 C30 10 26 5 28 2 C31 5 35 10 36 14" fill="#5a9438"/><path d="M36 14 C42 10 46 5 44 2 C41 5 37 10 36 14" fill="#5a9438"/><ellipse cx="36" cy="47" rx="26" ry="30" fill="url(#hog)"/><ellipse cx="28" cy="36" rx="9" ry="12" fill="white" opacity="0.12" transform="rotate(-15 28 36)"/><path d="M14 42 Q36 38 58 42" stroke="#b86008" stroke-width="1.5" fill="none" opacity="0.5"/><path d="M12 50 Q36 46 60 50" stroke="#b86008" stroke-width="1.5" fill="none" opacity="0.4"/><ellipse cx="36" cy="76" rx="12" ry="4" fill="#8b4a06" opacity="0.5"/><defs><radialGradient id="hog" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#fad060"/><stop offset="45%" stop-color="#e8940c"/><stop offset="100%" stop-color="#8b4a04"/></radialGradient></defs></svg></span><div><h1 id="hdr-title">ONION DIGITAL TWIN</h1><p id="hdr-sub">Blockchain-Powered Storage</p></div></div>
+  <div class="h-right">
+    <div class="live-dot"></div>
+    <span id="hdr-live" style="font-size:12px;color:var(--green)">LIVE</span>
+    <div class="h-role farmer" id="hdr-role">FARMER</div>
+    <div class="h-time" id="clock">--:--:--</div>
+    <button class="logout-btn" onclick="logout()" id="hdr-logout">&#8592; LOGOUT</button>
+  </div>
+</header>
+
+<div class="page" id="page-farmer">
+  <div class="fg">
+    <div class="card hc">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div class="card-title" style="--ct:#22c55e;margin-bottom:0" id="f-health-title">HEALTH SCORE</div><svg width="28" height="32" viewBox="0 0 72 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M36 14 C34 8 35 3 36 0 C37 3 38 8 36 14" fill="#4a7c2f"/><path d="M36 14 C30 10 26 5 28 2 C31 5 35 10 36 14" fill="#5a9438"/><path d="M36 14 C42 10 46 5 44 2 C41 5 37 10 36 14" fill="#5a9438"/><ellipse cx="36" cy="47" rx="26" ry="30" fill="url(#fhog)"/><ellipse cx="28" cy="36" rx="9" ry="12" fill="white" opacity="0.15" transform="rotate(-15 28 36)"/><path d="M13 50 Q36 46 59 50" stroke="#b86008" stroke-width="2" fill="none" opacity="0.45"/><defs><radialGradient id="fhog" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#fad060"/><stop offset="45%" stop-color="#e8940c"/><stop offset="100%" stop-color="#8b4a04"/></radialGradient></defs></svg></div>
+      <div class="health-center">
+        <div class="gw">
+          <svg class="g-svg" viewBox="0 0 150 150">
+            <circle class="g-bg" cx="75" cy="75" r="60"/>
+            <circle class="g-fill" id="gaugeFill" cx="75" cy="75" r="60" stroke="#22c55e"/>
+          </svg>
+          <div class="g-text"><div class="g-num" id="healthNum" style="color:#22c55e">87</div><div class="g-pct">%</div></div>
+        </div>
+        <div class="risk-tag risk-low" id="riskTag">&#9899; LOW RISK</div>
+      </div>
+      <div class="cbox">
+        <div style="font-size:10px;font-weight:600;color:var(--blue);letter-spacing:1px;margin-bottom:8px" id="f-ctitle">&#9939; SMART CONTRACT</div>
+        <div class="crow"><span class="cl" id="f-auction-lbl">Auction</span><span id="auctionStatus" class="c-open">OPEN &#10003;</span></div>
+        <div class="crow"><span class="cl" id="f-gate-lbl">Quality Gate</span><span class="cv">Health &gt; 80%</span></div>
+        <div class="crow"><span class="cl" id="f-bid-lbl">Top Bid</span><span class="cv" style="color:var(--green)">&#8377;28/kg</span></div>
+      </div>
+    </div>
+    <div class="card sc">
+      <div class="card-title" style="--ct:#3b82f6" id="f-sensors-title">LIVE SENSOR DATA</div>
+      <div class="sr">
+        <div class="sb" id="tempBox"><div class="sn" id="f-temp-name">🌡 TEMPERATURE</div><div class="sv" id="tempVal" style="color:#3b82f6">24.2</div><div class="su">&#176;C</div><div class="sbar"><div class="sfill" id="tempBar" style="width:40%;background:#3b82f6"></div></div><div class="ssafe" id="f-temp-safe">Safe &lt; 27&#176;C</div></div>
+        <div class="sb" id="humBox"><div class="sn" id="f-hum-name">💧 HUMIDITY</div><div class="sv" id="humVal" style="color:#22c55e">68.4</div><div class="su">% RH</div><div class="sbar"><div class="sfill" id="humBar" style="width:55%;background:#22c55e"></div></div><div class="ssafe" id="f-hum-safe">Safe &lt; 75%</div></div>
+        <div class="sb" id="gasBox"><div class="sn" id="f-gas-name">☁ ROT GAS</div><div class="sv" id="gasVal" style="color:#22c55e">28.1</div><div class="su">ppm</div><div class="sbar"><div class="sfill" id="gasBar" style="width:28%;background:#22c55e"></div></div><div class="ssafe" id="f-gas-safe">Safe &lt; 30ppm</div></div>
+      </div>
+    </div>
+    <div class="card slc">
+      <div class="card-title" style="--ct:#6366f1" id="f-shelf-title">SHELF LIFE</div>
+      <div class="shelf-num" id="shelfDays">10</div>
+      <div class="shelf-unit" id="f-days">DAYS REMAINING</div>
+      <div class="shelf-bar"><div class="shelf-fill" id="shelfFill" style="width:71%"></div></div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px" id="f-storage-note">Based on current conditions</div>
+      <div class="pbox">
+        <div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1px;margin-bottom:8px" id="f-earnings">&#128176; FARMER EARNINGS</div>
+        <div class="pr"><span class="pl" id="f-mandi">Via Mandi</span><span class="pold">&#8377;8/kg</span></div>
+        <div class="pr"><span class="pl" id="f-platform">Our Platform</span><span class="pnew">&#8377;28/kg</span></div>
+        <div class="pgain" id="f-gain">+250% &#8593; 3 Middlemen Removed</div>
+      </div>
+    </div>
+    <div class="card cc">
+      <div class="card-title" style="--ct:#a78bfa" id="f-chart-title">HEALTH HISTORY</div>
+      <div class="chart-area"><canvas id="healthChart"></canvas></div>
+      <div class="chart-legend">
+        <span style="color:var(--green)" id="f-l-health">&#9679; Health</span>
+        <span style="color:var(--blue)" id="f-l-hum">&#9679; Humidity</span>
+        <span style="color:var(--yellow)" id="f-l-temp">&#9679; Temperature</span>
+      </div>
+    </div>
+  </div>
+  <div class="bg">
+    <div class="card">
+      <div class="card-title" style="--ct:#f59e0b" id="f-log-title">SELF-HEALING LOG</div>
+      <div class="log-feed" id="logFeed"><div class="log-item"><span class="log-time">--:--</span><span class="log-msg log-info" id="f-init-msg">System initialized.</span></div></div>
+      <button class="demo-btn" onclick="triggerAnomaly()" id="f-anomaly-btn">&#9888; SIMULATE ANOMALY</button>
+      <button class="reset-btn" onclick="resetSystem()" id="f-reset-btn">&#8635; RESET TO NORMAL</button>
+    </div>
+    <div class="card">
+      <div class="card-title" style="--ct:#22c55e" id="f-act-title">SELF-HEALING ACTUATORS</div>
+      <div class="abox" id="fanBox"><div class="aicon" id="fanIcon">&#127744;</div><div class="ainfo"><div class="aname" id="fanLabel">Ventilation Fan</div><div class="asub" id="fanSub">Standby mode</div></div><span class="abadge boff" id="fanBadge">OFF</span></div>
+      <div class="abox" id="neemBox"><div class="aicon">&#127807;</div><div class="ainfo"><div class="aname" id="f-neem">Neem Vapor</div><div class="asub" id="f-neem-sub">Anti-fungal protection</div></div><span class="abadge boff" id="neemBadge">OFF</span></div>
+      
+    </div>
+    <div class="card">
+      <div class="card-title" style="--ct:#3b82f6" id="f-chain-title">⛓ BLOCKCHAIN LOG</div>
+      <div id="chainFeed">
+        <div class="chain-item"><div class="chain-hash">0x3a4f...d92c &#8594; <span id="chain-type-1"></span></div><div class="chain-meta"><span id="chain-detail-1"></span><span class="chain-ok" id="chain-conf-1"></span></div></div>
+        <div class="chain-item"><div class="chain-hash">0x7c1d...b831 &#8594; <span id="chain-type-2"></span></div><div class="chain-meta"><span id="chain-detail-2"></span><span class="chain-ok" id="chain-conf-2"></span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="card-title" style="--ct:#f59e0b" id="f-mq-title">MQ-135 — GAS DETECTION</div>
+    <div class="mq-table-wrap">
+      <table class="mq-table">
+        <thead>
+          <tr>
+            <th id="f-mq-gas">GAS</th>
+            <th id="f-mq-formula">FORMULA</th>
+            <th id="f-mq-sens">SENSITIVITY</th>
+            <th id="f-mq-rel">RELEVANCE</th>
+            <th id="f-mq-thresh">SAFE LIMIT</th>
+            <th id="f-mq-live" style="color:var(--green);letter-spacing:1px">LIVE (ppm)</th>
+            <th id="f-mq-status" style="color:var(--green);letter-spacing:1px">STATUS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--green);font-weight:600" id="mq-name-nh3">Ammonia</td>
+            <td style="font-family:'JetBrains Mono',monospace">NH&#8323;</td>
+            <td><span class="pill pill-high">HIGH</span></td>
+            <td id="mq-nh3">Primary rot gas</td>
+            <td style="font-family:'JetBrains Mono',monospace;color:var(--green)">&lt;30ppm</td>
+            <td><span id="live-nh3" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:var(--green)">...</span></td>
+            <td><span id="stat-nh3" class="pill pill-high" style="font-size:10px">...</span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--blue);font-weight:600" id="mq-name-co2">Carbon Dioxide</td>
+            <td style="font-family:'JetBrains Mono',monospace">CO&#8322;</td>
+            <td><span class="pill pill-med">MED</span></td>
+            <td id="mq-co2">Respiration / aging</td>
+            <td style="font-family:'JetBrains Mono',monospace;color:var(--blue)">&lt;1000ppm</td>
+            <td><span id="live-co2" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:var(--blue)">...</span></td>
+            <td><span id="stat-co2" class="pill pill-high" style="font-size:10px">...</span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--yellow);font-weight:600" id="mq-name-h2s">Hydrogen Sulfide</td>
+            <td style="font-family:'JetBrains Mono',monospace">H&#8322;S</td>
+            <td><span class="pill pill-med">MED</span></td>
+            <td id="mq-h2s">Sulfur / rotten smell</td>
+            <td style="font-family:'JetBrains Mono',monospace;color:var(--yellow)">&lt;5ppm</td>
+            <td><span id="live-h2s" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:var(--yellow)">...</span></td>
+            <td><span id="stat-h2s" class="pill pill-high" style="font-size:10px">...</span></td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--muted);text-align:center">
+      <span id="f-mq-note">&#9889; Live readings from MQ-135 sensor via ESP32 &nbsp;|&nbsp; Values derived using gas correlation model</span>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;border-color:rgba(34,197,94,0.3)">
+    <div class="card-title" style="--ct:#22c55e" id="f-bids-title">🤝 INCOMING BIDS — ACCEPT TO SELL</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px" id="f-bids-note">Once you accept, smart contract auto-releases payment to your wallet</div>
+    <div id="farmer-bid-feed">
+      <div class="chain-item" style="border-color:rgba(34,197,94,0.3)">
+        <div class="chain-hash" style="color:var(--green);font-size:12px">🧅 BATCH-ONI-2024-001 (<span id="f-farmer-name">Ramesh Patil</span> — <span id="f-your-batch">YOUR BATCH</span>)</div>
+        <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:10px">
+          <div>
+            <div style="color:var(--muted);font-size:10px;margin-bottom:3px" id="fb-lbl1">TOP BID RECEIVED</div>
+            <div style="color:var(--green);font-weight:700;font-size:20px" id="fb-amount1">₹28/kg</div>
+            <div style="color:var(--muted);font-size:11px;margin-top:2px">by <span id="fb-trader1">Suresh Traders</span></div>
+          </div>
+          <button onclick="farmerAccept('BATCH-001','fb-status1','fb-btn1')" id="fb-btn1" style="padding:10px 18px;background:var(--green);border:none;border-radius:8px;color:#000;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap"></button>
+        </div>
+        <div style="font-size:11px;color:var(--green);margin-top:8px;font-weight:600" id="fb-status1"></div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+          <div style="color:var(--muted);font-size:10px;margin-bottom:4px" id="f-other-bids-lbl">OTHER BIDS</div>
+          <div style="font-size:11px" id="fb-other1">FreshMart: ₹26/kg &nbsp;|&nbsp; 5 min ago</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FARMER CAMERA ───────────────────────────────────── -->
+  <input type="file" id="farmerFileInput" accept="image/*" style="display:none"/>
+  <div class="cam-box" style="margin-top:14px;cursor:pointer" onclick="document.getElementById('farmerFileInput').click()">
+    <div class="cam-header">
+      <span class="cam-title" id="f-cam-title">📷 CRATE</span>
+      <span class="cam-status wait" id="f-cam-status">⏳</span>
+    </div>
+    <div class="cam-img-wrap">
+      <img id="farmerCamImg" alt="Your onion crate" />
+      <div class="cam-placeholder" id="farmerCamPlaceholder">
+        <div style="font-size:24px">📷</div>
+        <p id="f-cam-wait" style="font-size:9px;color:var(--muted);margin:3px 0 0;text-align:center">Tap to photo</p>
+      </div>
+      <div class="cam-overlay" id="farmerCamOverlay" style="color:var(--green)">● SENT</div>
+    </div>
+    <div style="padding:5px 8px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <span id="f-cam-info" style="font-size:8px;color:var(--muted)">Visible to vendors</span>
+      <span id="f-cam-ts" style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted)">--:--</span>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-vendor">
+  <!-- Marketplace header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+    <div>
+      <div style="font-size:20px;font-weight:700;color:#fff;letter-spacing:0.3px">🏪 Onion Marketplace</div>
+      <div style="font-size:11px;color:var(--vmuted);margin-top:2px" id="v-checking">Live batches available for bidding</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <div style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:6px 14px;font-size:11px;color:#818cf8;font-weight:600">📦 2 Batches Live</div>
+      <div id="v-esp32-badge" style="background:rgba(100,116,139,0.15);border:1px solid rgba(100,116,139,0.3);border-radius:8px;padding:6px 14px;font-size:11px;color:#94a3b8;font-weight:600">⏳ Connecting...</div>
+    </div>
+  </div>
+  <div class="vbatches">
+      <!-- ═══ BATCH-001 CARD ═══ -->
+    <div class="vcard" id="v-batch1-card">
+      <!-- Card header -->
+      <div class="vcard-head">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:38px;height:38px;border-radius:10px;background:rgba(99,102,241,0.15);display:flex;align-items:center;justify-content:center;"><svg width="20" height="22" viewBox="0 0 72 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M36 14 C34 8 35 3 36 0 C37 3 38 8 36 14" fill="#4a7c2f"/><path d="M36 14 C30 10 26 5 28 2 C31 5 35 10 36 14" fill="#5a9438"/><path d="M36 14 C42 10 46 5 44 2 C41 5 37 10 36 14" fill="#5a9438"/><ellipse cx="36" cy="47" rx="26" ry="30" fill="url(#sog1)"/><ellipse cx="28" cy="36" rx="9" ry="12" fill="white" opacity="0.15" transform="rotate(-15 28 36)"/><path d="M13 50 Q36 46 59 50" stroke="#b86008" stroke-width="2" fill="none" opacity="0.45"/><defs><radialGradient id="sog1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#fad060"/><stop offset="45%" stop-color="#e8940c"/><stop offset="100%" stop-color="#8b4a04"/></radialGradient></defs></svg></div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#fff">BATCH-ONI-2024-001</div>
+            <div style="font-size:11px;color:var(--vmuted);margin-top:1px">📍 Ramesh Patil · <span id="v-loc1">Nashik, MH</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="vpill-live" id="v-pill1">● LIVE</span>
+          <span style="font-size:9px;color:var(--vmuted)">⛓ On-Chain</span>
+        </div>
+      </div>
+      <!-- Sensor row -->
+      <div class="vsensor-row">
+        <div class="vsensor"><div class="vsval" id="v-temp">--</div><div class="vslbl" id="v-tlbl">Temp °C</div></div>
+        <div class="vsensor"><div class="vsval" id="v-hum">--</div><div class="vslbl" id="v-hlbl2">Humidity %</div></div>
+        <div class="vsensor"><div class="vsval" id="v-gas">--</div><div class="vslbl" id="v-glbl">NH₃ ppm</div></div>
+        <div class="vsensor"><div class="vsval" style="color:var(--green)" id="v-health1">--</div><div class="vslbl">Health %</div></div>
+      </div>
+      <div id="v-source" style="font-size:10px;color:var(--vmuted);margin-bottom:10px">Connecting to ESP32...</div>
+      <!-- Camera -->
+      <div class="vcam-box">
+        <div class="vcam-head">
+          <span>📷 Crate Camera</span>
+          <span id="vc1-status" class="vcam-wait-badge">⏳ Waiting</span>
+        </div>
+        <div class="vcam-view">
+          <img id="vc1-img" style="width:100%;height:100%;object-fit:cover;display:none" alt="Batch 001"/>
+          <div id="vc1-ph" class="vcam-ph"><span style="font-size:22px">📷</span><br><span id="vc1-ph-txt" style="font-size:11px;color:var(--vmuted)">Farmer photo appears here</span></div>
+          <div id="vc1-ov" style="display:none;position:absolute;top:6px;right:8px;background:rgba(0,200,80,0.85);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;color:#000">● LIVE</div>
+        </div>
+        <div style="padding:4px 10px;font-size:10px;color:var(--vmuted)" id="vc1-ts">No photo yet</div>
+      </div>
+      <!-- Blockchain cert -->
+      <details class="vchain-details">
+        <summary style="font-size:10px;color:var(--vmuted);cursor:pointer;padding:6px 0;letter-spacing:1px">⛓ BLOCKCHAIN CERTIFICATE ▾</summary>
+        <div class="vchain-body">
+          <div class="vchain-row"><span id="v-cl1">Contract</span><span>0x3a4f...d92c</span></div>
+          <div class="vchain-row"><span id="v-vl1">Farmer Verified</span><span style="color:var(--green)" id="v-conf1"></span></div>
+          <div class="vchain-row"><span id="v-ql1">Quality Gate</span><span style="color:var(--green)" id="v-gate"></span></div>
+          <div class="vchain-row"><span id="v-sl1">Storage Since</span><span id="v-date1">March 01, 2026</span></div>
+          <div class="vchain-row"><span id="v-hl1">Self-Heal Events</span><span style="color:#818cf8" id="v-healcount"></span></div>
+        </div>
+      </details>
+      <!-- Bid section -->
+      <div class="vbid-section">
+        <div style="font-size:11px;font-weight:600;color:#fff;margin-bottom:10px;letter-spacing:0.5px" id="v-bidlbl1">💰 Place Your Bid</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px" class="vbid-inputs">
+          <div>
+            <div class="vinput-lbl" id="v-price-lbl1">₹ Price / kg</div>
+            <input class="vinput" type="number" id="bidInput1" placeholder="e.g. 30" min="1" oninput="calcTotal('1')"/>
+          </div>
+          <div>
+            <div class="vinput-lbl" id="v-qty-lbl1">Quantity (kg)</div>
+            <input class="vinput" type="number" id="qtyInput1" placeholder="e.g. 500" min="1" oninput="calcTotal('1')"/>
+          </div>
+        </div>
+        <div id="total-box1" class="vtotal-box" style="display:none">
+          <span id="v-total-lbl1" style="font-size:11px;color:var(--vmuted)">Total Payment</span>
+          <span id="total-amt1" style="font-size:16px;font-weight:700;color:var(--green)">₹0</span>
+        </div>
+        <button class="vbid-btn" onclick="placeBid('BATCH-001','bidInput1','qtyInput1','bids1')" id="v-bidbtn1">🏷️ Submit Bid</button>
+        <!-- Existing bids leaderboard -->
+        <div style="margin-top:10px">
+          <div style="font-size:9px;color:var(--vmuted);letter-spacing:1px;margin-bottom:6px">CURRENT BIDS (HIGHEST FIRST)</div>
+          <div id="bids1">
+            <div class="vbid-entry"><span class="vbid-rank">🥇</span><span class="vbid-name" id="bid-v1">Suresh Traders</span><span class="vbid-price">₹28/kg</span><span class="vbid-qty">400kg</span><span class="vbid-total" style="color:var(--green)">₹11,200</span><span class="vbid-time" id="bid-t1">2m</span></div>
+            <div class="vbid-entry"><span class="vbid-rank">🥈</span><span class="vbid-name" id="bid-v2">FreshMart</span><span class="vbid-price">₹26/kg</span><span class="vbid-qty">300kg</span><span class="vbid-total" style="color:var(--green)">₹7,800</span><span class="vbid-time" id="bid-t2">5m</span></div>
+          </div>
+        </div>
+        <div id="v-confbtn1" class="vawait-bar">⏳ <span id="v-await1">Awaiting Farmer Approval</span></div>
+        <div id="v-notify1" style="display:none;margin-top:10px;padding:14px;border-radius:10px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.5);text-align:center">
+          <div style="font-size:18px;margin-bottom:4px">🔔</div>
+          <div style="color:#ef4444;font-weight:700;font-size:13px" id="v-notify-title">DEAL CLOSED</div>
+          <div style="color:var(--vmuted);font-size:11px;margin-top:4px" id="v-notify-msg">Farmer has accepted another bid.</div>
+          <div style="color:var(--vmuted);font-size:10px;margin-top:6px" id="v-notify-sub">Check other batches below ↓</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ BATCH-002 CARD ═══ -->
+    <div class="vcard">
+      <div class="vcard-head">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.1);display:flex;align-items:center;justify-content:center;"><svg width="20" height="22" viewBox="0 0 72 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M36 14 C34 8 35 3 36 0 C37 3 38 8 36 14" fill="#4a7c2f"/><path d="M36 14 C30 10 26 5 28 2 C31 5 35 10 36 14" fill="#5a9438"/><path d="M36 14 C42 10 46 5 44 2 C41 5 37 10 36 14" fill="#5a9438"/><ellipse cx="36" cy="47" rx="26" ry="30" fill="url(#sog2)"/><ellipse cx="28" cy="36" rx="9" ry="12" fill="white" opacity="0.15" transform="rotate(-15 28 36)"/><path d="M13 50 Q36 46 59 50" stroke="#a07008" stroke-width="2" fill="none" opacity="0.45"/><defs><radialGradient id="sog2" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#f8d890"/><stop offset="45%" stop-color="#d08820"/><stop offset="100%" stop-color="#7a4008"/></radialGradient></defs></svg></div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#fff">BATCH-ONI-2024-002</div>
+            <div style="font-size:11px;color:var(--vmuted);margin-top:1px">📍 Vijay Kumar · <span id="v-loc2">Solapur, MH</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="vpill-med" id="v-pill2">MEDIUM</span>
+          <span style="font-size:9px;color:var(--vmuted)">⛓ On-Chain</span>
+        </div>
+      </div>
+      <!-- Sensor row -->
+      <div class="vsensor-row">
+        <div class="vsensor"><div class="vsval">29.4</div><div class="vslbl" id="v-tlbl2">Temp °C</div></div>
+        <div class="vsensor"><div class="vsval">71.2</div><div class="vslbl" id="v-hlbl3">Humidity %</div></div>
+        <div class="vsensor"><div class="vsval">42</div><div class="vslbl" id="v-glbl2">NH₃ ppm</div></div>
+        <div class="vsensor"><div class="vsval" style="color:var(--yellow)">72</div><div class="vslbl">Health %</div></div>
+      </div>
+      <div style="font-size:10px;color:var(--yellow);margin-bottom:10px;text-align:center" id="v-watchmsg">⚠ Quality watch — below 80%</div>
+      <!-- Camera -->
+      <div class="vcam-box">
+        <div class="vcam-head">
+          <span>📷 Crate Camera</span>
+          <span id="vc2-status" class="vcam-wait-badge" style="background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3)">● DEMO</span>
+        </div>
+        <div class="vcam-view">
+          <img id="vc2-img" style="width:100%;height:100%;object-fit:cover;display:block" alt="Batch 002" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22400%22%20height%3D%22225%22%20viewBox%3D%220%200%20400%20225%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3CradialGradient%20id%3D%22bg%22%20cx%3D%2250%25%22%20cy%3D%2240%25%22%20r%3D%2260%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%231a1206%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%230a0804%22/%3E%0A%20%20%20%20%3C/radialGradient%3E%0A%20%20%20%20%3CradialGradient%20id%3D%22o1%22%20cx%3D%2240%25%22%20cy%3D%2235%25%22%20r%3D%2255%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23f5c842%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%2245%25%22%20stop-color%3D%22%23d4901a%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%238a5008%22/%3E%0A%20%20%20%20%3C/radialGradient%3E%0A%20%20%20%20%3CradialGradient%20id%3D%22o2%22%20cx%3D%2238%25%22%20cy%3D%2232%25%22%20r%3D%2255%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23edb830%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%2245%25%22%20stop-color%3D%22%23c07e14%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%237a4206%22/%3E%0A%20%20%20%20%3C/radialGradient%3E%0A%20%20%20%20%3CradialGradient%20id%3D%22o3%22%20cx%3D%2242%25%22%20cy%3D%2233%25%22%20r%3D%2255%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23f0c038%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%2245%25%22%20stop-color%3D%22%23ca8818%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23844a08%22/%3E%0A%20%20%20%20%3C/radialGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%223%22%20stdDeviation%3D%224%22%20flood-color%3D%22rgba%280%2C0%2C0%2C0.6%29%22/%3E%0A%20%20%20%20%3C/filter%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22wood%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%220%25%22%20y2%3D%22100%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%235c3d1e%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%233a2410%22/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22woodlight%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%22100%25%22%20y2%3D%220%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%236b4a24%22%20stop-opacity%3D%220.8%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%2250%25%22%20stop-color%3D%22%238a6030%22%20stop-opacity%3D%220.4%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%236b4a24%22%20stop-opacity%3D%220.8%22/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%3C/defs%3E%0A%20%20%3C%21--%20Background%20--%3E%0A%20%20%3Crect%20width%3D%22400%22%20height%3D%22225%22%20fill%3D%22url%28%23bg%29%22/%3E%0A%20%20%3C%21--%20Ambient%20top%20light%20--%3E%0A%20%20%3Cellipse%20cx%3D%22200%22%20cy%3D%2260%22%20rx%3D%22200%22%20ry%3D%2280%22%20fill%3D%22rgba%28245%2C180%2C50%2C0.04%29%22/%3E%0A%20%20%0A%20%20%3C%21--%20Crate%20floor/back%20wall%20--%3E%0A%20%20%3Crect%20x%3D%2220%22%20y%3D%22145%22%20width%3D%22360%22%20height%3D%2270%22%20fill%3D%22url%28%23wood%29%22%20rx%3D%222%22/%3E%0A%20%20%3Crect%20x%3D%2220%22%20y%3D%22143%22%20width%3D%22360%22%20height%3D%225%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.06%29%22/%3E%0A%20%20%3C%21--%20Wood%20grain%20lines%20--%3E%0A%20%20%3Cline%20x1%3D%2220%22%20y1%3D%22158%22%20x2%3D%22380%22%20y2%3D%22158%22%20stroke%3D%22rgba%280%2C0%2C0%2C0.2%29%22%20stroke-width%3D%221%22/%3E%0A%20%20%3Cline%20x1%3D%2220%22%20y1%3D%22172%22%20x2%3D%22380%22%20y2%3D%22172%22%20stroke%3D%22rgba%280%2C0%2C0%2C0.15%29%22%20stroke-width%3D%221%22/%3E%0A%20%20%3Cline%20x1%3D%2220%22%20y1%3D%22186%22%20x2%3D%22380%22%20y2%3D%22186%22%20stroke%3D%22rgba%280%2C0%2C0%2C0.1%29%22%20stroke-width%3D%221%22/%3E%0A%20%20%3C%21--%20Vertical%20slats%20--%3E%0A%20%20%3Crect%20x%3D%2270%22%20%20y%3D%22143%22%20width%3D%227%22%20height%3D%2272%22%20fill%3D%22rgba%280%2C0%2C0%2C0.18%29%22/%3E%0A%20%20%3Crect%20x%3D%2271%22%20%20y%3D%22143%22%20width%3D%222%22%20height%3D%2272%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.04%29%22/%3E%0A%20%20%3Crect%20x%3D%22195%22%20y%3D%22143%22%20width%3D%227%22%20height%3D%2272%22%20fill%3D%22rgba%280%2C0%2C0%2C0.18%29%22/%3E%0A%20%20%3Crect%20x%3D%22196%22%20y%3D%22143%22%20width%3D%222%22%20height%3D%2272%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.04%29%22/%3E%0A%20%20%3Crect%20x%3D%22322%22%20y%3D%22143%22%20width%3D%227%22%20height%3D%2272%22%20fill%3D%22rgba%280%2C0%2C0%2C0.18%29%22/%3E%0A%20%20%3Crect%20x%3D%22323%22%20y%3D%22143%22%20width%3D%222%22%20height%3D%2272%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.04%29%22/%3E%0A%0A%20%20%3C%21--%20BACK%20ROW%20onions%20%28smaller%2C%20darker%29%20--%3E%0A%20%20%3C%21--%20onion%20B1%20--%3E%0A%20%20%3Cellipse%20cx%3D%2280%22%20%20cy%3D%22128%22%20rx%3D%2228%22%20ry%3D%2221%22%20fill%3D%22url%28%23o2%29%22%20filter%3D%22url%28%23shadow%29%22%20opacity%3D%220.75%22/%3E%0A%20%20%3Cellipse%20cx%3D%2278%22%20%20cy%3D%22123%22%20rx%3D%2214%22%20ry%3D%2210%22%20fill%3D%22rgba%28255%2C220%2C100%2C0.12%29%22/%3E%0A%20%20%3Cpath%20d%3D%22M80%20107%20Q84%2094%2081%2086%20Q78%2094%2080%20107%22%20fill%3D%22%234a6620%22%20stroke%3D%22%233a5015%22%20stroke-width%3D%221.2%22/%3E%0A%20%20%3C%21--%20onion%20B2%20--%3E%0A%20%20%3Cellipse%20cx%3D%22160%22%20cy%3D%22126%22%20rx%3D%2227%22%20ry%3D%2220%22%20fill%3D%22url%28%23o3%29%22%20filter%3D%22url%28%23shadow%29%22%20opacity%3D%220.75%22/%3E%0A%20%20%3Cellipse%20cx%3D%22158%22%20cy%3D%22121%22%20rx%3D%2213%22%20ry%3D%229%22%20%20fill%3D%22rgba%28255%2C220%2C100%2C0.12%29%22/%3E%0A%20%20%3Cpath%20d%3D%22M160%20106%20Q163%2093%20160%2085%20Q157%2093%20160%20106%22%20fill%3D%22%234a6620%22%20stroke%3D%22%233a5015%22%20stroke-width%3D%221.2%22/%3E%0A%20%20%3C%21--%20onion%20B3%20--%3E%0A%20%20%3Cellipse%20cx%3D%22240%22%20cy%3D%22127%22%20rx%3D%2228%22%20ry%3D%2221%22%20fill%3D%22url%28%23o1%29%22%20filter%3D%22url%28%23shadow%29%22%20opacity%3D%220.75%22/%3E%0A%20%20%3Cellipse%20cx%3D%22238%22%20cy%3D%22122%22%20rx%3D%2214%22%20ry%3D%2210%22%20fill%3D%22rgba%28255%2C220%2C100%2C0.12%29%22/%3E%0A%20%20%3Cpath%20d%3D%22M240%20107%20Q244%2094%20241%2086%20Q238%2094%20240%20107%22%20fill%3D%22%234a6620%22%20stroke%3D%22%233a5015%22%20stroke-width%3D%221.2%22/%3E%0A%20%20%3C%21--%20onion%20B4%20--%3E%0A%20%20%3Cellipse%20cx%3D%22318%22%20cy%3D%22126%22%20rx%3D%2226%22%20ry%3D%2219%22%20fill%3D%22url%28%23o2%29%22%20filter%3D%22url%28%23shadow%29%22%20opacity%3D%220.75%22/%3E%0A%20%20%3Cellipse%20cx%3D%22316%22%20cy%3D%22121%22%20rx%3D%2213%22%20ry%3D%229%22%20%20fill%3D%22rgba%28255%2C220%2C100%2C0.12%29%22/%3E%0A%20%20%3Cpath%20d%3D%22M318%20107%20Q321%2094%20318%2087%20Q315%2094%20318%20107%22%20fill%3D%22%234a6620%22%20stroke%3D%22%233a5015%22%20stroke-width%3D%221.2%22/%3E%0A%0A%20%20%3C%21--%20FRONT%20ROW%20onions%20%28larger%2C%20brighter%29%20--%3E%0A%20%20%3C%21--%20onion%20F1%20--%3E%0A%20%20%3Cellipse%20cx%3D%2248%22%20%20cy%3D%22153%22%20rx%3D%2234%22%20ry%3D%2227%22%20fill%3D%22url%28%23o1%29%22%20filter%3D%22url%28%23shadow%29%22/%3E%0A%20%20%3Cellipse%20cx%3D%2245%22%20%20cy%3D%22145%22%20rx%3D%2216%22%20ry%3D%2212%22%20fill%3D%22rgba%28255%2C230%2C120%2C0.15%29%22/%3E%0A%20%20%3Cellipse%20cx%3D%2246%22%20%20cy%3D%22144%22%20rx%3D%228%22%20%20ry%3D%226%22%20%20fill%3D%22rgba%28255%2C240%2C160%2C0.1%29%22/%3E%0A%20%20%3Cpath%20d%3D%22M48%20126%20Q53%20110%2049%20101%20Q45%20110%2048%20126%22%20fill%3D%22%23556b2f%22%20stroke%3D%22%23445520%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3C%21--%20onion%20F2%20--%3E%0A%20%20%3Cellipse%20cx%3D%22128%22%20cy%3D%22151%22%20rx%3D%2236%22%20ry%3D%2228%22%20fill%3D%22url%28%23o3%29%22%20filter%3D%22url%28%23shadow%29%22/%3E%0A%20%20%3Cellipse%20cx%3D%22125%22%20cy%3D%22143%22%20rx%3D%2217%22%20ry%3D%2212%22%20fill%3D%22rgba%28255%2C230%2C120%2C0.15%29%22/%3E%0A%20%20%3Cellipse%20cx%3D%22126%22%20cy%3D%22142%22%20rx%3D%229%22%20%20ry%3D%226%22%20%20fill%3D%22rgba%28255%2C240%2C160%2C0.1%29%22/%3E%0A%20%20%3Cpath%20d%3D%22M128%20123%20Q133%20107%20129%2098%20Q125%20107%20128%20123%22%20fill%3D%22%23556b2f%22%20stroke%3D%22%23445520%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3C%21--%20onion%20F3%20%28center%2C%20slightly%20bigger%29%20--%3E%0A%20%20%3Cellipse%20cx%3D%22208%22%20cy%3D%22150%22%20rx%3D%2238%22%20ry%3D%2230%22%20fill%3D%22url%28%23o1%29%22%20filter%3D%22url%28%23shadow%29%22/%3E%0A%20%20%3Cellipse%20cx%3D%22205%22%20cy%3D%22141%22%20rx%3D%2218%22%20ry%3D%2213%22%20fill%3D%22rgba%28255%2C235%2C130%2C0.18%29%22/%3E%0A%20%20%3Cellipse%20cx%3D%22206%22%20cy%3D%22140%22%20rx%3D%229%22%20%20ry%3D%227%22%20%20fill%3D%22rgba%28255%2C245%2C170%2C0.12%29%22/%3E%0A%20%20%3Cpath%20d%3D%22M208%20120%20Q213%20104%20209%2095%20Q205%20104%20208%20120%22%20fill%3D%22%23556b2f%22%20stroke%3D%22%23445520%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3C%21--%20onion%20F4%20--%3E%0A%20%20%3Cellipse%20cx%3D%22288%22%20cy%3D%22152%22%20rx%3D%2235%22%20ry%3D%2227%22%20fill%3D%22url%28%23o2%29%22%20filter%3D%22url%28%23shadow%29%22/%3E%0A%20%20%3Cellipse%20cx%3D%22285%22%20cy%3D%22144%22%20rx%3D%2216%22%20ry%3D%2212%22%20fill%3D%22rgba%28255%2C230%2C120%2C0.15%29%22/%3E%0A%20%20%3Cellipse%20cx%3D%22286%22%20cy%3D%22143%22%20rx%3D%228%22%20%20ry%3D%226%22%20%20fill%3D%22rgba%28255%2C240%2C160%2C0.1%29%22/%3E%0A%20%20%3Cpath%20d%3D%22M288%20125%20Q293%20109%20289%20100%20Q285%20109%20288%20125%22%20fill%3D%22%23556b2f%22%20stroke%3D%22%23445520%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3C%21--%20onion%20F5%20--%3E%0A%20%20%3Cellipse%20cx%3D%22362%22%20cy%3D%22154%22%20rx%3D%2233%22%20ry%3D%2226%22%20fill%3D%22url%28%23o3%29%22%20filter%3D%22url%28%23shadow%29%22/%3E%0A%20%20%3Cellipse%20cx%3D%22359%22%20cy%3D%22146%22%20rx%3D%2215%22%20ry%3D%2211%22%20fill%3D%22rgba%28255%2C230%2C120%2C0.15%29%22/%3E%0A%20%20%3Cpath%20d%3D%22M362%20128%20Q367%20112%20363%20103%20Q359%20112%20362%20128%22%20fill%3D%22%23556b2f%22%20stroke%3D%22%23445520%22%20stroke-width%3D%221.5%22/%3E%0A%0A%20%20%3C%21--%20Crate%20side%20wall%20left%20--%3E%0A%20%20%3Crect%20x%3D%2218%22%20y%3D%22100%22%20width%3D%2210%22%20height%3D%22115%22%20fill%3D%22%234a3018%22%20rx%3D%222%22/%3E%0A%20%20%3Crect%20x%3D%2218%22%20y%3D%22100%22%20width%3D%223%22%20height%3D%22115%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.04%29%22/%3E%0A%20%20%3C%21--%20Crate%20side%20wall%20right%20--%3E%0A%20%20%3Crect%20x%3D%22372%22%20y%3D%22100%22%20width%3D%2210%22%20height%3D%22115%22%20fill%3D%22%234a3018%22%20rx%3D%222%22/%3E%0A%0A%20%20%3C%21--%20Top%20rim%20of%20crate%20--%3E%0A%20%20%3Crect%20x%3D%2218%22%20y%3D%2298%22%20width%3D%22364%22%20height%3D%228%22%20fill%3D%22%236b4a24%22%20rx%3D%222%22/%3E%0A%20%20%3Crect%20x%3D%2218%22%20y%3D%2298%22%20width%3D%22364%22%20height%3D%222%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.07%29%22/%3E%0A%0A%20%20%3C%21--%20Dark%20vignette%20corners%20--%3E%0A%20%20%3CradialGradient%20id%3D%22vig%22%20cx%3D%2250%25%22%20cy%3D%2250%25%22%20r%3D%2270%25%22%3E%0A%20%20%20%20%3Cstop%20offset%3D%2250%25%22%20stop-color%3D%22transparent%22/%3E%0A%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22rgba%280%2C0%2C0%2C0.5%29%22/%3E%0A%20%20%3C/radialGradient%3E%0A%20%20%3Crect%20width%3D%22400%22%20height%3D%22225%22%20fill%3D%22url%28%23vig%29%22/%3E%0A%0A%20%20%3C%21--%20HUD%20overlay%20%E2%80%94%20top%20left%20label%20--%3E%0A%20%20%3Crect%20x%3D%2210%22%20y%3D%2210%22%20width%3D%22120%22%20height%3D%2220%22%20rx%3D%224%22%20fill%3D%22rgba%280%2C0%2C0%2C0.6%29%22/%3E%0A%20%20%3Ccircle%20cx%3D%2222%22%20cy%3D%2220%22%20r%3D%224%22%20fill%3D%22%2322c55e%22/%3E%0A%20%20%3Ctext%20x%3D%2232%22%20y%3D%2224%22%20font-family%3D%22monospace%22%20font-size%3D%2210%22%20fill%3D%22%2322c55e%22%20font-weight%3D%22bold%22%3EBATCH-002%20LIVE%3C/text%3E%0A%0A%20%20%3C%21--%20HUD%20overlay%20%E2%80%94%20top%20right%20location%20--%3E%0A%20%20%3Crect%20x%3D%22270%22%20y%3D%2210%22%20width%3D%22120%22%20height%3D%2220%22%20rx%3D%224%22%20fill%3D%22rgba%280%2C0%2C0%2C0.6%29%22/%3E%0A%20%20%3Ctext%20x%3D%22278%22%20y%3D%2224%22%20font-family%3D%22monospace%22%20font-size%3D%2210%22%20fill%3D%22%23f59e0b%22%3E%F0%9F%93%8D%20Solapur%2C%20MH%3C/text%3E%0A%0A%20%20%3C%21--%20Timestamp%20bottom%20right%20--%3E%0A%20%20%3Crect%20x%3D%22270%22%20y%3D%22198%22%20width%3D%22120%22%20height%3D%2218%22%20rx%3D%224%22%20fill%3D%22rgba%280%2C0%2C0%2C0.5%29%22/%3E%0A%20%20%3Ctext%20x%3D%22278%22%20y%3D%22211%22%20font-family%3D%22monospace%22%20font-size%3D%229%22%20fill%3D%22%2364748b%22%3EVijay%20Kumar%20%C2%B7%20demo%3C/text%3E%0A%3C/svg%3E"/>
+          <div id="vc2-ph" class="vcam-ph" style="display:none"><span style="font-size:22px">📷</span><br><span id="vc2-ph-txt" style="font-size:11px;color:var(--vmuted)">Farmer photo appears here</span></div>
+          <div id="vc2-ov" style="display:block;position:absolute;top:6px;right:8px;background:rgba(0,0,0,0.6);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;color:#f59e0b">📸 DEMO</div>
+        </div>
+        <div style="padding:4px 10px;font-size:10px;color:var(--vmuted)" id="vc2-ts">Demo photo · Solapur batch</div>
+      </div>
+      <!-- Blockchain cert -->
+      <details class="vchain-details">
+        <summary style="font-size:10px;color:var(--vmuted);cursor:pointer;padding:6px 0;letter-spacing:1px">⛓ BLOCKCHAIN CERTIFICATE ▾</summary>
+        <div class="vchain-body">
+          <div class="vchain-row"><span id="v-cl2">Contract</span><span>0x7c1d...b831</span></div>
+          <div class="vchain-row"><span id="v-vl2">Farmer Verified</span><span style="color:var(--green)" id="v-conf2"></span></div>
+          <div class="vchain-row"><span id="v-ql2">Quality Gate</span><span style="color:var(--yellow)" id="v-gate2"></span></div>
+          <div class="vchain-row"><span id="v-sl2">Storage Since</span><span id="v-date2">Feb 25, 2026</span></div>
+          <div class="vchain-row"><span id="v-hl2">Self-Heal Events</span><span style="color:#818cf8" id="v-healcount2"></span></div>
+        </div>
+      </details>
+      <!-- Bid section -->
+      <div class="vbid-section">
+        <div style="font-size:11px;font-weight:600;color:#fff;margin-bottom:10px;letter-spacing:0.5px" id="v-bidlbl2">💰 Place Your Bid</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px" class="vbid-inputs">
+          <div>
+            <div class="vinput-lbl" id="v-price-lbl2">₹ Price / kg</div>
+            <input class="vinput" type="number" id="bidInput2" placeholder="e.g. 20" min="1" oninput="calcTotal('2')"/>
+          </div>
+          <div>
+            <div class="vinput-lbl" id="v-qty-lbl2">Quantity (kg)</div>
+            <input class="vinput" type="number" id="qtyInput2" placeholder="e.g. 300" min="1" oninput="calcTotal('2')"/>
+          </div>
+        </div>
+        <div id="total-box2" class="vtotal-box" style="display:none">
+          <span id="v-total-lbl2" style="font-size:11px;color:var(--vmuted)">Total Payment</span>
+          <span id="total-amt2" style="font-size:16px;font-weight:700;color:var(--green)">₹0</span>
+        </div>
+        <button class="vbid-btn" onclick="placeBid('BATCH-002','bidInput2','qtyInput2','bids2')" id="v-bidbtn2">🏷️ Submit Bid</button>
+        <div style="margin-top:10px">
+          <div style="font-size:9px;color:var(--vmuted);letter-spacing:1px;margin-bottom:6px">CURRENT BIDS (HIGHEST FIRST)</div>
+          <div id="bids2">
+            <div class="vbid-entry"><span class="vbid-rank">🥇</span><span class="vbid-name" id="bid-v3">BigBasket</span><span class="vbid-price">₹22/kg</span><span class="vbid-qty">500kg</span><span class="vbid-total" style="color:var(--green)">₹11,000</span><span class="vbid-time" id="bid-t3">8m</span></div>
+          </div>
+        </div>
+        <div id="v-confbtn2" class="vawait-bar">⏳ <span id="v-await2">Awaiting Farmer Approval</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const T={
+en:{title:'ONION DIGITAL TWIN',sub:'Blockchain-Powered Storage Intelligence',langLbl:'SELECT LANGUAGE',farmer:'FARMER',fsub:'Monitor your storage',vendor:'VENDOR',vsub:'Browse & bid on batches',logout:'← LOGOUT',live:'LIVE',healthTitle:'HEALTH SCORE',sensorsTitle:'LIVE SENSOR DATA',tempName:'TEMPERATURE',humName:'HUMIDITY',gasName:'NH₃ ROT GAS',tempSafe:'Safe < 27°C',humSafe:'Safe < 75%',gasSafe:'Safe < 30ppm',shelfTitle:'SHELF LIFE',days:'DAYS REMAINING',storageNote:'Based on current conditions',earningsTitle:'💰 FARMER EARNINGS',mandi:'Via Mandi',platform:'Our Platform',gain:'+250% ↑ 3 Middlemen Removed',chartTitle:'HEALTH HISTORY',lHealth:'● Health',lHum:'● Humidity',lTemp:'● Temperature',logTitle:'SELF-HEALING LOG',anomalyBtn:'⚠ SIMULATE ANOMALY',resetBtn:'↺ RESET TO NORMAL',actTitle:'SELF-HEALING ACTUATORS',fanName:'Ventilation Fan',fanSub:'Standby mode',neemName:'Neem Vapor',neemSub:'Anti-fungal protection',chainTitle:'⛓ BLOCKCHAIN LOG',ctitle:'⛓ SMART CONTRACT',auctionLbl:'Auction',gateLbl:'Quality Gate',bidLbl:'Top Bid',mqTitle:'MQ-135 — GAS DETECTION',mqGas:'GAS',mqFormula:'FORMULA',mqSens:'SENSITIVITY',mqRel:'RELEVANCE',mqThresh:'THRESHOLD',nh3:'Primary rot gas',co2:'Respiration / aging',h2s:'Sulfur / rotten smell',benz:'Fermentation / late-stage rot',initMsg:'System initialized. Monitoring active.',riskLow:'⬤ LOW RISK',riskMed:'⬤ MEDIUM RISK',riskHigh:'⬤ HIGH RISK',fanOn:'ON',fanOff:'OFF',vHlbl:'LIVE HEALTH SCORE',vSlbl:'SHELF LIFE REMAINING',vSsub:'Days at optimal storage',vBlbl:'CURRENT TOP BID /kg',vBsub:'vs ₹8/kg at mandi',vTlbl:'Temp °C',vHlbl2:'Humidity %',vGlbl:'NH₃ ppm',vSrc:'Connecting to ESP32...',vCert:'⛓ BLOCKCHAIN CERTIFICATE',vCl:'Contract',vVl:'Farmer Verified',vQl:'Quality Gate',vSl:'Storage Since',vHl:'Self-Heal Events',vBidLbl:'PLACE YOUR BID (₹/kg)',vBidBtn:'BID',vPill2:'MEDIUM',vWatch:'⚠ Quality watch — below 80%',vConfirm:'⛓ CONFIRM PURCHASE',vLive:'LIVE ●',mqLive:'LIVE (ppm)',mqStatus:'STATUS',mqWait:'WAIT',mqSafe:'✓ SAFE',mqWatch:'⚠ WATCH',mqAlert:'✗ ALERT',mqNote:'⚡ Live readings from MQ-135 sensor via ESP32',chainConfirmed:'✓ CONFIRMED',chainHealth:'Health',chainQgate:'Quality gate passed',chainBatchLogged:'BATCH_LOGGED',chainAuctionOpen:'AUCTION_OPEN',vYourBid:'✓ Your Bid',vChecking:'⚑ Checking...',vConfirmed:'✓ CONFIRMED',vOnChain:'on-chain',vMinsAgo:'min ago',vLoc1:'Nashik, MH',vLoc2:'Solapur, MH',vTrader1:'Suresh Traders',vTrader2:'FreshMart',vTrader3:'BigBasket',vGate1:'Health > 80% ✓',vGate2:'72% — WATCH',vHealCount1:'3',vHealCount2:'7',fBidsTitle:'🤝 INCOMING BIDS — ACCEPT TO SELL',fAcceptBtn:'✅ ACCEPT BID',fAccepted:'✅ Accepted! Payment released to wallet',fPaymentReleased:'Payment auto-released to farmer wallet',fSoldMsg:'SOLD — Payment sent to your wallet!',fDealDone:'✅ Deal Confirmed by Farmer',fBidsNote:'Once you accept, smart contract auto-releases payment to your wallet',fAwait:'⏳ Awaiting Farmer Approval',fTopBid:'TOP BID RECEIVED',vNotifTitle:'🔔 DEAL CLOSED',vNotifMsg:'Farmer has accepted another bid. This batch is no longer available.',vNotifSub:'Check other available batches below ↓',vSoldOut:'SOLD OUT',chainSaleConf:'SALE_CONFIRMED',demoResetLbl:'RESET DEMO',logAnomaly:'⚠ ANOMALY — High humidity + NH₃ spike!',logFanOn:'⚡ Fan activated — Reducing rot gas',logReset:'✓ System reset — Normal conditions restored',logESP32:'✅ ESP32 LIVE — Real sensor data active!',logESP32off:'⚠ ESP32 disconnected — simulation mode',chainAnomaly:'ANOMALY_DETECTED',chainSelfHeal:'Self-heal triggered',chainFanOn:'FAN_ACTIVATED',chainVentOn:'Ventilation ON',chainNorm:'SYSTEM_NORMALIZED',chainHRestored:'Health restored',fOtherBids:'OTHER BIDS',fYourBatch:'YOUR BATCH',fFarmerName:'Ramesh Patil',vDate1:'March 01, 2026',vDate2:'Feb 25, 2026',mqNH3:'Ammonia',mqCO2:'Carbon Dioxide',mqH2S:'Hydrogen Sulfide',mqBenz:'Ethanol (Alcohol)',logNewBid:'💰 New bid',logOnBatch:'on',logSoldMsg:'SOLD — Payment sent to your wallet!',chainBidPlaced:'BID_PLACED',vCamTitle:'📷 LIVE ONION CRATE CAMERA — BATCH-001',vCamWait:'Farmer will upload a photo of the crate',vCamInfo:'Farmer crate photo — auto-updates when new photo taken',vCamLive:'● LIVE',vCamWaiting:'⏳ Waiting for farmer photo...',vBatchFarmer:'Ramesh Patil · Nashik, MH',vBatchPill:'⚡ ESP32 LIVE',vBatchChain:'⛓ On-Chain Verified',vBatchHealth:'BATCH-001 HEALTH',fCamTitle:'📷 CRATE PHOTO — YOUR ONIONS',fCamSmall:'Tap button below to photograph your crate',fCamInfo:'Photo sent to server — vendors can see it',fCamBtnLbl:'TAKE PHOTO'},
+hi:{title:'प्याज डिजिटल ट्विन',sub:'ब्लॉकचेन-संचालित भंडारण प्रणाली',langLbl:'भाषा चुनें',farmer:'किसान',fsub:'अपना भंडारण देखें',vendor:'विक्रेता',vsub:'बैच देखें और बोली लगाएं',logout:'⬅ लॉगआउट',live:'लाइव',healthTitle:'स्वास्थ्य स्कोर',sensorsTitle:'लाइव सेंसर डेटा',tempName:'तापमान',humName:'नमी',gasName:'NH₃ सड़न गैस',tempSafe:'सुरक्षित < 27°C',humSafe:'सुरक्षित < 75%',gasSafe:'सुरक्षित < 30ppm',shelfTitle:'शेल्फ लाइफ',days:'दिन शेष',storageNote:'वर्तमान स्थितियों के आधार पर',earningsTitle:'💰 किसान कमाई',mandi:'मंडी से',platform:'हमारा प्लेटफॉर्म',gain:'+250% ↑ 3 बिचौलिए हटाए',chartTitle:'स्वास्थ्य इतिहास',lHealth:'● स्वास्थ्य',lHum:'● नमी',lTemp:'● तापमान',logTitle:'स्व-उपचार लॉग',anomalyBtn:'⚠ असामान्यता दिखाएं',resetBtn:'↺ सामान्य करें',actTitle:'स्व-उपचार उपकरण',fanName:'वेंटिलेशन पंखा',fanSub:'स्टैंडबाय मोड',neemName:'नीम वाष्प',neemSub:'एंटी-फंगल सुरक्षा',chainTitle:'⛓ ब्लॉकचेन लॉग',ctitle:'⛓ स्मार्ट कॉन्ट्रैक्ट',auctionLbl:'नीलामी',gateLbl:'गुणवत्ता गेट',bidLbl:'सर्वोच्च बोली',mqTitle:'MQ-135 — गैस पहचान',mqGas:'गैस',mqFormula:'सूत्र',mqSens:'संवेदनशीलता',mqRel:'प्याज से संबंध',mqThresh:'सीमा',nh3:'मुख्य सड़न गैस',co2:'श्वसन — उम्र बढ़ना',h2s:'सल्फर — बदबू',benz:'किण्वन / अंतिम चरण सड़न',initMsg:'सिस्टम शुरू हुआ। निगरानी सक्रिय।',riskLow:'⬤ कम जोखिम',riskMed:'⬤ मध्यम जोखिम',riskHigh:'⬤ उच्च जोखिम',fanOn:'चालू',fanOff:'बंद',vHlbl:'लाइव स्वास्थ्य स्कोर',vSlbl:'शेल्फ लाइफ शेष',vSsub:'इष्टतम भंडारण में दिन',vBlbl:'वर्तमान शीर्ष बोली /kg',vBsub:'मंडी ₹8/kg की तुलना में',vTlbl:'तापमान °C',vHlbl2:'नमी %',vGlbl:'NH₃ ppm',vSrc:'ESP32 से जोड़ रहे हैं...',vCert:'⛓ ब्लॉकचेन प्रमाणपत्र',vCl:'कॉन्ट्रैक्ट',vVl:'किसान सत्यापित',vQl:'गुणवत्ता गेट',vSl:'भंडारण से',vHl:'स्व-उपचार घटनाएं',vBidLbl:'बोली लगाएं (₹/kg)',vBidBtn:'बोली',vPill2:'मध्यम',vWatch:'⚠ गुणवत्ता ध्यान — 80% से नीचे',vConfirm:'⛓ खरीद की पुष्टि करें',vLive:'लाइव ●',mqLive:'लाइव (ppm)',mqStatus:'स्थिति',mqWait:'प्रतीक्षा',mqSafe:'✓ सुरक्षित',mqWatch:'⚠ ध्यान दें',mqAlert:'✗ खतरा',mqNote:'⚡ MQ-135 सेंसर से ESP32 के माध्यम से लाइव रीडिंग',mqNH3:'अमोनिया',mqCO2:'कार्बन डायऑक्साइड',mqH2S:'हायड्रोजन सल्फाइड',mqBenz:'इथेनॉल (अल्कोहल)',chainConfirmed:'✓ पुष्टि',chainHealth:'स्वास्थ्य',chainQgate:'गुणवत्ता जांच पास',chainBatchLogged:'बैच_दर्ज',chainAuctionOpen:'नीलामी_खुली',vYourBid:'✓ आपकी बोली',vChecking:'⚑ जाँच हो रही है...',vConfirmed:'✓ पुष्टि हुई',vOnChain:'ऑन-चेन',vMinsAgo:'मिनट पहले',vLoc1:'नासिक, MH',vLoc2:'सोलापुर, MH',vTrader1:'सुरेश ट्रेडर्स',vTrader2:'फ्रेशमार्ट',vTrader3:'बिगबास्केट',vGate1:'स्वास्थ्य > 80% ✓',vGate2:'72% — ध्यान दें',vHealCount1:'3',vHealCount2:'7',fBidsTitle:'🤝 आने वाली बोलियां — स्वीकार करने के लिए',fAcceptBtn:'✅ बोली स्वीकार करें',fAccepted:'✅ स्वीकार! भुगतान वॉलेट में भेजा गया',fPaymentReleased:'भुगतान स्वचालित रूप से जारी',fSoldMsg:'बिक गया — भुगतान आपके वॉलेट में!',fDealDone:'✅ किसान ने सौदा पुष्टि किया',fBidsNote:'स्वीकार करने के बाद, स्मार्ट कॉन्ट्रैक्ट भुगतान जारी करेगा',fAwait:'⏳ किसान की मंजूरी का इंतजार',fTopBid:'सर्वोच्च बोली प्राप्त',vNotifTitle:'🔔 सौदा बंद हो गया',vNotifMsg:'किसान ने दूसरी बोली स्वीकार की। यह बैच अब उपलब्ध नहीं है।',vNotifSub:'नीचे अन्य बैच देखें ↓',vSoldOut:'बिक गया',chainSaleConf:'बिक्री_पुष्टि',demoResetLbl:'डेमो रीसेट',logAnomaly:'⚠ असामान्यता — उच्च नमी + NH₃ वृद्धि!',logFanOn:'⚡ पंखा चालू — सड़न गैस कम हो रही है',logReset:'✓ सिस्टम रीसेट — सामान्य स्थिति बहाल',logESP32:'✅ ESP32 लाइव — रियल सेंसर डेटा सक्रिय!',logESP32off:'⚠ ESP32 डिस्कनेक्ट — सिमुलेशन मोड',chainAnomaly:'असामान्यता_पकड़ी',chainSelfHeal:'स्व-उपचार शुरू',chainFanOn:'पंखा_चालू',chainVentOn:'वेंटिलेशन चालू',chainNorm:'सिस्टम_सामान्य',chainHRestored:'स्वास्थ्य बहाल',fOtherBids:'अन्य बोलियां',fYourBatch:'आपका बैच',fFarmerName:'रमेश पाटिल',vDate1:'01 मार्च, 2026',vDate2:'25 फरवरी, 2026',mqNH3:'अमोनिया',mqCO2:'कार्बन डाइऑक्साइड',mqH2S:'हाइड्रोजन सल्फाइड',mqBenz:'इथेनॉल (अल्कोहल)',logNewBid:'💰 नई बोली',logOnBatch:'पर',logSoldMsg:'बिक गया — भुगतान आपके वॉलेट में!',chainBidPlaced:'बोली_दर्ज',vCamTitle:'📷 लाइव प्याज क्रेट कैमरा — बैच-001',vCamWait:'किसान क्रेट की फोटो अपलोड करेगा',vCamInfo:'किसान फोटो — नई फोटो आने पर अपडेट होगी',vCamLive:'● लाइव',vCamWaiting:'⏳ किसान की फोटो का इंतजार...',vBatchFarmer:'रमेश पाटिल · नासिक, MH',vBatchPill:'⚡ ESP32 लाइव',vBatchChain:'⛓ ऑन-चेन सत्यापित',vBatchHealth:'बैच-001 स्वास्थ्य',fCamTitle:'📷 क्रेट फोटो — आपके प्याज',fCamSmall:'नीचे बटन से अपने क्रेट की फोटो लें',fCamInfo:'फोटो सर्वर पर भेजी — विक्रेता देख सकते हैं',fCamBtnLbl:'फोटो लें'},
+mr:{title:'कांदा डिजिटल ट्विन',sub:'ब्लॉकचेन-आधारित साठवण प्रणाली',langLbl:'भाषा निवडा',farmer:'शेतकरी',fsub:'तुमचा साठा पहा',vendor:'विक्रेता',vsub:'बॅच पहा व बोली लावा',logout:'⬅ लॉगआउट',live:'लाइव',healthTitle:'आरोग्य स्कोर',sensorsTitle:'लाइव सेंसर डेटा',tempName:'तापमान',humName:'आर्द्रता',gasName:'NH₃ कुजणे वायू',tempSafe:'सुरक्षित < 27°C',humSafe:'सुरक्षित < 75%',gasSafe:'सुरक्षित < 30ppm',shelfTitle:'शेल्फ लाइफ',days:'दिवस शिल्लक',storageNote:'सध्याच्या स्थितींवर आधारित',earningsTitle:'💰 शेतकरी कमाई',mandi:'मंडीद्वारे',platform:'आमचे व्यासपीठ',gain:'+250% ↑ 3 दलाल काढले',chartTitle:'आरोग्य इतिहास',lHealth:'● आरोग्य',lHum:'● आर्द्रता',lTemp:'● तापमान',logTitle:'स्व-उपचार लॉग',anomalyBtn:'⚠ असामान्यता दाखवा',resetBtn:'↺ सामान्य करा',actTitle:'स्व-उपचार यंत्रे',fanName:'वायुवीजन पंखा',fanSub:'स्टँडबाय मोड',neemName:'कडुनिंब वाफ',neemSub:'बुरशीविरोधी संरक्षण',chainTitle:'⛓ ब्लॉकचेन लॉग',ctitle:'⛓ स्मार्ट करार',auctionLbl:'लिलाव',gateLbl:'गुणवत्ता गेट',bidLbl:'सर्वोच्च बोली',mqTitle:'MQ-135 — वायू शोध',mqGas:'वायू',mqFormula:'सूत्र',mqSens:'संवेदनशीलता',mqRel:'कांद्याशी संबंध',mqThresh:'मर्यादा',nh3:'मुख्य सड़न वायू',co2:'श्वसन — वृद्धत्व',h2s:'सल्फर — वास',benz:'किण्वन / उशिरा सड़न',initMsg:'सिस्टम सुरू झाले. निरीक्षण सक्रिय.',riskLow:'⬤ कमी धोका',riskMed:'⬤ मध्यम धोका',riskHigh:'⬤ जास्त धोका',fanOn:'चालू',fanOff:'बंद',vHlbl:'लाइव आरोग्य स्कोर',vSlbl:'शेल्फ लाइफ शिल्लक',vSsub:'इष्टतम साठवणुकीत दिवस',vBlbl:'सध्याची शीर्ष बोली /kg',vBsub:'मंडी ₹8/kg च्या तुलनेत',vTlbl:'तापमान °C',vHlbl2:'आर्द्रता %',vGlbl:'NH₃ ppm',vSrc:'ESP32 शी जोडत आहे...',vCert:'⛓ ब्लॉकचेन प्रमाणपत्र',vCl:'करार',vVl:'शेतकरी सत्यापित',vQl:'गुणवत्ता गेट',vSl:'साठवणूक सुरू',vHl:'स्व-उपचार घटना',vBidLbl:'बोली लावा (₹/kg)',vBidBtn:'बोली',vPill2:'मध्यम',vWatch:'⚠ गुणवत्ता लक्ष — 80% खाली',vConfirm:'⛓ खरेदी निश्चित करा',vLive:'लाइव ●',mqLive:'लाइव (ppm)',mqStatus:'स्थिति',mqWait:'प्रतीक्षा',mqSafe:'✓ सुरक्षित',mqWatch:'⚠ ध्यान दें',mqAlert:'✗ खतरा',mqNote:'⚡ MQ-135 सेंसर से ESP32 के माध्यम से लाइव रीडिंग',chainConfirmed:'✓ पुष्टि',chainHealth:'स्वास्थ्य',chainQgate:'गुणवत्ता जांच पास',chainBatchLogged:'बैच_दर्ज',chainAuctionOpen:'नीलामी_खुली',vYourBid:'✓ आपकी बोली',vChecking:'⚑ जाँच हो रही है...',vConfirmed:'✓ पुष्टि हुई',vOnChain:'ऑन-चेन',vMinsAgo:'मिनट पहले',vLoc1:'नासिक, MH',vLoc2:'सोलापुर, MH',vTrader1:'सुरेश ट्रेडर्स',vTrader2:'फ्रेशमार्ट',vTrader3:'बिगबास्केट',vGate1:'स्वास्थ्य > 80% ✓',vGate2:'72% — ध्यान दें',vHealCount1:'3',vHealCount2:'7'},
+kn:{title:'ಈರುಳ್ಳಿ ಡಿಜಿಟಲ್ ಟ್ವಿನ್',sub:'ಬ್ಲಾಕ್ಚೈನ್-ಆಧಾರಿತ ಸಂಗ್ರಹ ವ್ಯವಸ್ಥೆ',langLbl:'ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ',farmer:'ರೈತ',fsub:'ನಿಮ್ಮ ಸಂಗ್ರಹ ನೋಡಿ',vendor:'ವ್ಯಾಪಾರಿ',vsub:'ಬ್ಯಾಚ್ ನೋಡಿ ಮತ್ತು ಬಿಡ್ ಮಾಡಿ',logout:'⬅ ಲಾಗ್‌ಔಟ್',live:'ಲೈವ್',healthTitle:'ಆರೋಗ್ಯ ಸ್ಕೋರ್',sensorsTitle:'ಲೈವ್ ಸೆನ್ಸರ್ ಡೇಟಾ',tempName:'ತಾಪಮಾನ',humName:'ಆರ್ದ್ರತೆ',gasName:'NH₃ ಕೊಳೆತ ಅನಿಲ',tempSafe:'ಸುರಕ್ಷಿತ < 27°C',humSafe:'ಸುರಕ್ಷಿತ < 75%',gasSafe:'ಸುರಕ್ಷಿತ < 30ppm',shelfTitle:'ಶೆಲ್ಫ್ ಜೀವನ',days:'ದಿನಗಳು ಉಳಿದಿವೆ',storageNote:'ಪ್ರಸ್ತುತ ಪರಿಸ್ಥಿತಿಗಳ ಆಧಾರದ ಮೇಲೆ',earningsTitle:'💰 ರೈತ ಆದಾಯ',mandi:'ಮಂಡಿ ಮೂಲಕ',platform:'ನಮ್ಮ ವೇದಿಕೆ',gain:'+250% ↑ 3 ದಲ್ಲಾಳಿಗಳು ತೆಗೆದರು',chartTitle:'ಆರೋಗ್ಯ ಇತಿಹಾಸ',lHealth:'● ಆರೋಗ್ಯ',lHum:'● ಆರ್ದ್ರತೆ',lTemp:'● ತಾಪಮಾನ',logTitle:'ಸ್ವ-ಗುಣ ಲಾಗ್',anomalyBtn:'⚠ ಅಸಾಮಾನ್ಯ ತೋರಿಸಿ',resetBtn:'↺ ಸಾಮಾನ್ಯಗೊಳಿಸಿ',actTitle:'ಸ್ವ-ಗುಣ ಸಾಧನಗಳು',fanName:'ವಾತಾಯನ ಪಂಖ',fanSub:'ಸ್ಟ್ಯಾಂಡ್‌ಬೈ ಮೋಡ್',neemName:'ಬೇವಿನ ಆವಿ',neemSub:'ಶಿಲೀಂಧ್ರ ವಿರೋಧಿ ರಕ್ಷಣೆ',chainTitle:'⛓ ಬ್ಲಾಕ್ಚೈನ್ ಲಾಗ್',ctitle:'⛓ ಸ್ಮಾರ್ಟ್ ಒಪ್ಪಂದ',auctionLbl:'ಹರಾಜು',gateLbl:'ಗುಣಮಟ್ಟ ಗೇಟ್',bidLbl:'ಅತ್ಯುನ್ನತ ಬಿಡ್',mqTitle:'MQ-135 — ಅನಿಲ ಪತ್ತೆ',mqGas:'ಅನಿಲ',mqFormula:'ಸೂತ್ರ',mqSens:'ಸಂವೇದನಶೀಲತೆ',mqRel:'ಈರುಳ್ಳಿಗೆ ಸಂಬಂಧ',mqThresh:'ಮಿತಿ',nh3:'ಮುಖ್ಯ ಕೊಳೆತ ಅನಿಲ',co2:'ಉಸಿರಾಟ / ವಯಸ್ಸಾಗುವಿಕೆ',h2s:'ಗಂಧಕ / ಕೊಳೆತ ವಾಸನೆ',benz:'ಹುದುಗುವಿಕೆ / ತಡ-ಹಂತ ಕೊಳೆತ',initMsg:'ಸಿಸ್ಟಮ್ ಪ್ರಾರಂಭ. ಮೇಲ್ವಿಚಾರಣೆ ಸಕ್ರಿಯ.',riskLow:'⬤ ಕಡಿಮೆ ಅಪಾಯ',riskMed:'⬤ ಮಧ್ಯಮ ಅಪಾಯ',riskHigh:'⬤ ಹೆಚ್ಚಿನ ಅಪಾಯ',fanOn:'ಆನ್',fanOff:'ಆಫ್',vHlbl:'ಲೈವ್ ಆರೋಗ್ಯ ಸ್ಕೋರ್',vSlbl:'ಶೆಲ್ಫ್ ಜೀವನ ಉಳಿದಿದೆ',vSsub:'ಸೂಕ್ತ ಸಂಗ್ರಹದಲ್ಲಿ ದಿನಗಳು',vBlbl:'ಪ್ರಸ್ತುತ ಅತ್ಯುನ್ನತ ಬಿಡ್ /kg',vBsub:'ಮಂಡಿ ₹8/kg ಗೆ ಹೋಲಿಸಿ',vTlbl:'ತಾಪ °C',vHlbl2:'ಆರ್ದ್ರತೆ %',vGlbl:'NH₃ ppm',vSrc:'ESP32 ಗೆ ಸಂಪರ್ಕಿಸುತ್ತಿದ್ದೇವೆ...',vCert:'⛓ ಬ್ಲಾಕ್ಚೈನ್ ಪ್ರಮಾಣಪತ್ರ',vCl:'ಒಪ್ಪಂದ',vVl:'ರೈತ ಪರಿಶೀಲಿಸಲಾಗಿದೆ',vQl:'ಗುಣಮಟ್ಟ ಗೇಟ್',vSl:'ಸಂಗ್ರಹ ದಿನಾಂಕ',vHl:'ಸ್ವ-ಗುಣ ಘಟನೆಗಳು',vBidLbl:'ನಿಮ್ಮ ಬಿಡ್ ಮಾಡಿ (₹/kg)',vBidBtn:'ಬಿಡ್',vPill2:'ಮಧ್ಯಮ',vWatch:'⚠ ಗುಣಮಟ್ಟ ಗಮನ — 80% ಕೆಳಗೆ',vConfirm:'⛓ ಖರೀದಿ ದೃಢಪಡಿಸಿ',vLive:'ಲೈವ್ ●',mqLive:'ಲೈವ್ (ppm)',mqStatus:'ಸ್ಥಿತಿ',mqWait:'ನಿರೀಕ್ಷಿಸಿ',mqSafe:'✓ ಸುರಕ್ಷಿತ',mqWatch:'⚠ ಗಮನಿಸಿ',mqAlert:'✗ ಎಚ್ಚರಿಕೆ',mqNote:'⚡ MQ-135 ಸೆನ್ಸರ್‌ನಿಂದ ESP32 ಮೂಲಕ ಲೈವ್ ರೀಡಿಂಗ್',chainConfirmed:'✓ ದೃಢಪಟ್ಟಿದೆ',chainHealth:'ಆರೋಗ್ಯ',chainQgate:'ಗುಣಮಟ್ಟ ಪರಿಶೀಲನೆ ಪಾಸ್',chainBatchLogged:'ಬ್ಯಾಚ್_ದಾಖಲು',chainAuctionOpen:'ಹರಾಜು_ತೆರೆದಿದೆ',vYourBid:'✓ ನಿಮ್ಮ ಬಿಡ್',vChecking:'⚑ ಪರಿಶೀಲಿಸುತ್ತಿದೆ...',vConfirmed:'✓ ದೃಢಪಟ್ಟಿದೆ',vOnChain:'ಆನ್-ಚೈನ್',vMinsAgo:'ನಿಮಿಷ ಹಿಂದೆ',vLoc1:'ನಾಸಿಕ್, MH',vLoc2:'ಸೋಲಾಪುರ, MH',vTrader1:'ಸುರೇಶ್ ಟ್ರೇಡರ್ಸ್',vTrader2:'ಫ್ರೆಶ್‌ಮಾರ್ಟ್',vTrader3:'ಬಿಗ್‌ಬಾಸ್ಕೆಟ್',vGate1:'ಆರೋಗ್ಯ > 80% ✓',vGate2:'72% — ಗಮನಿಸಿ',vHealCount1:'3',vHealCount2:'7',fBidsTitle:'🤝 ಬರುತ್ತಿರುವ ಬಿಡ್‌ಗಳು — ಸ್ವೀಕರಿಸಲು',fAcceptBtn:'✅ ಬಿಡ್ ಸ್ವೀಕರಿಸಿ',fAccepted:'✅ ಸ್ವೀಕರಿಸಿದೆ! ಪಾವತಿ ವ್ಯಾಲೆಟ್‌ಗೆ ಬಿಡುಗಡೆ',fPaymentReleased:'ಪಾವತಿ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಬಿಡುಗಡೆ',fSoldMsg:'ಮಾರಾಟ — ನಿಮ್ಮ ವ್ಯಾಲೆಟ್‌ಗೆ ಪಾವತಿ!',fDealDone:'✅ ರೈತ ಒಪ್ಪಂದ ದೃಢಪಡಿಸಿದ್ದಾರೆ',fBidsNote:'ನೀವು ಒಪ್ಪಿದ ನಂತರ, ಸ್ಮಾರ್ಟ್ ಕಾಂಟ್ರ್ಯಾಕ್ಟ್ ಪಾವತಿ ಬಿಡುಗಡೆ ಮಾಡುತ್ತದೆ',fAwait:'⏳ ರೈತರ ಅನುಮೋದನೆ ನಿರೀಕ್ಷಿಸಲಾಗುತ್ತಿದೆ',fTopBid:'ಅತ್ಯಧಿಕ ಬಿಡ್ ಸ್ವೀಕೃತ',vNotifTitle:'🔔 ಒಪ್ಪಂದ ಮುಗಿದಿದೆ',vNotifMsg:'ರೈತ ಇನ್ನೊಂದು ಬಿಡ್ ಸ್ವೀಕರಿಸಿದ್ದಾರೆ. ಈ ಬ್ಯಾಚ್ ಇನ್ನು ಲಭ್ಯವಿಲ್ಲ.',vNotifSub:'ಕೆಳಗೆ ಇತರ ಬ್ಯಾಚ್‌ಗಳನ್ನು ನೋಡಿ ↓',vSoldOut:'ಮಾರಾಟವಾಯಿತು',chainSaleConf:'ಮಾರಾಟ_ದೃಢ',demoResetLbl:'ಡೆಮೋ ರಿಸೆಟ್',logAnomaly:'⚠ ಅಸಾಮಾನ್ಯ — ಹೆಚ್ಚಿನ ಆರ್ದ್ರತೆ + NH₃ ಏರಿಕೆ!',logFanOn:'⚡ ಪಂಖ ಚಾಲನೆ — ಕೊಳೆತ ಅನಿಲ ಕಡಿಮೆ',logReset:'✓ ಸಿಸ್ಟಮ್ ರಿಸೆಟ್ — ಸಾಮಾನ್ಯ ಸ್ಥಿತಿ ಮರಳಿದೆ',logESP32:'✅ ESP32 ಲೈವ್ — ರಿಯಲ್ ಸೆನ್ಸರ್ ಡೇಟಾ ಸಕ್ರಿಯ!',logESP32off:'⚠ ESP32 ಸಂಪರ್ಕ ತಪ್ಪಿದೆ — ಸಿಮ್ಯುಲೇಷನ್ ಮೋಡ್',chainAnomaly:'ಅಸಾಮಾನ್ಯ_ಪತ್ತೆ',chainSelfHeal:'ಸ್ವ-ಗುಣ ಶುರು',chainFanOn:'ಪಂಖ_ಚಾಲನೆ',chainVentOn:'ವಾತಾಯನ ಚಾಲನೆ',chainNorm:'ಸಿಸ್ಟಮ್_ಸಾಮಾನ್ಯ',chainHRestored:'ಆರೋಗ್ಯ ಮರಳಿದೆ',fOtherBids:'ಇತರ ಬಿಡ್‌ಗಳು',fYourBatch:'ನಿಮ್ಮ ಬ್ಯಾಚ್',fFarmerName:'ರಮೇಶ್ ಪಾಟೀಲ್',vDate1:'01 ಮಾರ್ಚ್, 2026',vDate2:'25 ಫೆಬ್ರವರಿ, 2026',mqNH3:'ಅಮೋನಿಯಾ',mqCO2:'ಕಾರ್ಬನ್ ಡೈಆಕ್ಸೈಡ್',mqH2S:'ಹೈಡ್ರೋಜನ್ ಸಲ್ಫೈಡ್',mqBenz:'ಇಥೆನಾಲ್ (ಆಲ್ಕೋಹಾಲ್)',logNewBid:'💰 ಹೊಸ ಬಿಡ್',logOnBatch:'ಮೇಲೆ',logSoldMsg:'ಮಾರಾಟ — ನಿಮ್ಮ ವ್ಯಾಲೆಟ್‌ಗೆ ಪಾವತಿ!',chainBidPlaced:'ಬಿಡ್_ದಾಖಲು',vCamTitle:'📷 ಲೈವ್ ಈರುಳ್ಳಿ ಕ್ರೇಟ್ ಕ್ಯಾಮೆರಾ — ಬ್ಯಾಚ್-001',vCamWait:'ರೈತ ಕ್ರೇಟ್ ಫೋಟೋ ಅಪ್‌ಲೋಡ್ ಮಾಡುತ್ತಾರೆ',vCamInfo:'ರೈತ ಫೋಟೋ — ಹೊಸ ಫೋಟೋ ಬಂದಾಗ ಅಪ್‌ಡೇಟ್ ಆಗುತ್ತದೆ',vCamLive:'● ಲೈವ್',vCamWaiting:'⏳ ರೈತರ ಫೋಟೋ ನಿರೀಕ್ಷಿಸಲಾಗುತ್ತಿದೆ...',vBatchFarmer:'ರಮೇಶ್ ಪಾಟೀಲ್ · ನಾಸಿಕ್, MH',vBatchPill:'⚡ ESP32 ಲೈವ್',vBatchChain:'⛓ ಆನ್-ಚೈನ್ ಪರಿಶೀಲಿತ',vBatchHealth:'ಬ್ಯಾಚ್-001 ಆರೋಗ್ಯ',fCamTitle:'📷 ಕ್ರೇಟ್ ಫೋಟೋ — ನಿಮ್ಮ ಈರುಳ್ಳಿ',fCamSmall:'ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ ಕ್ರೇಟ್ ಫೋಟೋ ತೆಗೆಯಿರಿ',fCamInfo:'ಫೋಟೋ ಸರ್ವರ್‌ಗೆ ಕಳುಹಿಸಲಾಗಿದೆ — ವ್ಯಾಪಾರಿಗಳು ನೋಡಬಹುದು',fCamBtnLbl:'ಫೋಟೋ ತೆಗೆಯಿರಿ'}
+};
+let lang='en',role=null,usingLive=false,fanAngle=0,anomaly=false;
+const SERVER='http://10.201.29.214:3001/live';
+const IMAGE_SERVER='http://10.201.29.214:3001/image';
+let state={temp:24.2,humidity:68.4,gas:28.1,health:87,fanActive:false,shelfLife:10,history:{health:[],humidity:[],temp:[]}};
+function applyT(){
+  const t=T[lang];
+  const s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  s('ll-title',t.title);s('ll-sub',t.sub);s('ll-lang',t.langLbl);
+  s('ll-farmer',t.farmer);s('ll-fsub',t.fsub);s('ll-vendor',t.vendor);s('ll-vsub',t.vsub);
+  s('hdr-title',t.title);s('hdr-sub',t.sub);s('hdr-live',t.live);s('hdr-logout',t.logout);
+  if(role)s('hdr-role',role==='farmer'?t.farmer:t.vendor);
+  s('f-health-title',t.healthTitle);s('f-sensors-title',t.sensorsTitle);
+  s('f-temp-name',t.tempName);s('f-hum-name',t.humName);s('f-gas-name',t.gasName);
+  s('f-temp-safe',t.tempSafe);s('f-hum-safe',t.humSafe);s('f-gas-safe',t.gasSafe);
+  s('f-shelf-title',t.shelfTitle);s('f-days',t.days);s('f-storage-note',t.storageNote);
+  s('f-earnings',t.earningsTitle);s('f-mandi',t.mandi);s('f-platform',t.platform);s('f-gain',t.gain);
+  s('f-chart-title',t.chartTitle);s('f-l-health',t.lHealth);s('f-l-hum',t.lHum);s('f-l-temp',t.lTemp);
+  s('f-log-title',t.logTitle);s('f-anomaly-btn',t.anomalyBtn);s('f-reset-btn',t.resetBtn);
+  s('f-act-title',t.actTitle);s('fanLabel',t.fanName);s('fanSub',t.fanSub);
+  s('f-humid',t.humidName||'Humidifier');s('f-humid-sub',t.humidSub||'Moisture control');
+  s('f-neem',t.neemName);s('f-neem-sub',t.neemSub);
+  // Farmer camera panel
+  // Farmer camera
+  s('f-cam-title', t.fCamTitle||'📷 CRATE PHOTO — YOUR ONIONS');
+  s('f-cam-wait',  t.fCamSmall||'Tap button below to photograph your crate');
+  s('f-cam-info',  t.fCamInfo||'Photo sent to server — vendors can see it');
+  s('f-cam-btn-lbl', t.fCamBtnLbl||'TAKE PHOTO');
+  const fCamSt = document.getElementById('f-cam-status');
+  if(fCamSt && fCamSt.classList.contains('wait')) fCamSt.textContent = t.vCamWaiting||'⏳ No photo yet';
+  // Vendor camera
+  // Vendor in-card camera placeholders
+  const t1=T[lang];
+  const phTxt = t1.vCamWait||'Farmer photo will appear here';
+  const s2=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  s2('vc1-ph-txt', phTxt); s2('vc2-ph-txt', phTxt);
+  s('f-chain-title',t.chainTitle);
+  s('f-ctitle',t.ctitle);s('f-auction-lbl',t.auctionLbl);s('f-gate-lbl',t.gateLbl);s('f-bid-lbl',t.bidLbl);
+  s('f-mq-title',t.mqTitle);s('f-mq-gas',t.mqGas);s('f-mq-formula',t.mqFormula);
+  s('f-mq-sens',t.mqSens);s('f-mq-rel',t.mqRel);s('f-mq-thresh',t.mqThresh);
+  s('f-mq-live',t.mqLive);s('f-mq-status',t.mqStatus);s('f-mq-note',t.mqNote);
+  // Blockchain log static entries
+  const ct1=document.getElementById('chain-type-1');if(ct1)ct1.textContent=t.chainBatchLogged;
+  const cd1=document.getElementById('chain-detail-1');if(cd1)cd1.textContent=t.chainHealth+': 87%';
+  const cc1=document.getElementById('chain-conf-1');if(cc1)cc1.textContent=t.chainConfirmed;
+  const ct2=document.getElementById('chain-type-2');if(ct2)ct2.textContent=t.chainAuctionOpen;
+  const cd2=document.getElementById('chain-detail-2');if(cd2)cd2.textContent=t.chainQgate;
+  const cc2=document.getElementById('chain-conf-2');if(cc2)cc2.textContent=t.chainConfirmed;
+  s('mq-nh3',t.nh3);s('mq-co2',t.co2);s('mq-h2s',t.h2s);
+  s('mq-name-nh3', t.mqNH3||'Ammonia');
+  s('mq-name-co2', t.mqCO2||'Carbon Dioxide');
+  s('mq-name-h2s', t.mqH2S||'Hydrogen Sulfide');
+  
+  s('f-init-msg',t.initMsg);
+  const h=Math.round(state.health);
+  const rt=document.getElementById('riskTag');
+  if(rt){rt.textContent=h>=80?t.riskLow:h>=60?t.riskMed:t.riskHigh;rt.className='risk-tag '+(h>=80?'risk-low':h>=60?'risk-med':'risk-high');}
+  const fb=document.getElementById('fanBadge');if(fb){fb.textContent=state.fanActive?t.fanOn:t.fanOff;}
+  const nb=document.getElementById('neemBadge');if(nb){nb.textContent=t.fanOff;}
+  
+  s('v-hlbl',t.vBatchHealth||t.vHlbl);s('v-slbl',t.vSlbl);s('v-ssub',t.vSsub);s('v-blbl',t.vBlbl);s('v-bsub',t.vBsub);
+  s('v-batch-farmer',t.vBatchFarmer||'Ramesh Patil · Nashik, MH');
+  s('v-batch-pill',t.vBatchPill||'⚡ ESP32 LIVE');
+  s('v-batch-chain',t.vBatchChain||'⛓ On-Chain Verified');
+  s('v-tlbl',t.vTlbl);s('v-hlbl2',t.vHlbl2);s('v-glbl',t.vGlbl);
+  s('v-tlbl2',t.vTlbl);s('v-hlbl3',t.vHlbl2);s('v-glbl2',t.vGlbl);
+  if(!usingLive)s('v-source',t.vSrc);
+  s('v-cert1',t.vCert);s('v-cert2',t.vCert);
+  s('v-cl1',t.vCl);s('v-cl2',t.vCl);s('v-vl1',t.vVl);s('v-vl2',t.vVl);
+  s('v-ql1',t.vQl);s('v-ql2',t.vQl);s('v-sl1',t.vSl);s('v-sl2',t.vSl);
+  s('v-hl1',t.vHl);s('v-hl2',t.vHl);
+  s('v-bidlbl1',t.vBidLbl);s('v-bidlbl2',t.vBidLbl);
+  s('v-bidbtn1',t.vBidBtn);s('v-bidbtn2',t.vBidBtn);
+  s('v-checking', t.vChecking);
+  s('v-conf1', t.vConfirmed);  s('v-conf2', t.vConfirmed);
+  s('v-loc1', t.vLoc1);        s('v-loc2', t.vLoc2);
+  s('bid-v1', t.vTrader1);     s('bid-v2', t.vTrader2);    s('bid-v3', t.vTrader3);
+  s('bid-t1', '2 '+(t.vMinsAgo||'min ago'));
+  s('bid-t2', '5 '+(t.vMinsAgo||'min ago'));
+  s('bid-t3', '8 '+(t.vMinsAgo||'min ago'));
+  s('v-gate',  t.vGate1);      s('v-gate2', t.vGate2);
+  s('v-healcount',  (t.vHealCount1||'3')+' '+(t.vOnChain||'on-chain'));
+  s('v-healcount2', (t.vHealCount2||'7')+' '+(t.vOnChain||'on-chain'));
+  s('v-pill2',t.vPill2);s('v-watchmsg',t.vWatch);
+  s('v-await1', t.fAwait||'⏳ Awaiting Farmer Approval');
+  s('v-await2', t.fAwait||'⏳ Awaiting Farmer Approval');
+  s('f-bids-title', t.fBidsTitle||'🤝 INCOMING BIDS');
+  s('f-bids-note',  t.fBidsNote||'Smart contract auto-releases payment');
+  s('fb-trader1', t.vTrader1||'Suresh Traders');
+  // vendor cert confirmed
+  s('v-conf1',t.chainConfirmed||'✓ CONFIRMED');
+  s('v-conf2',t.chainConfirmed||'✓ CONFIRMED');
+  // vendor cert labels
+  s('v-cl1',t.vCl||'Contract'); s('v-cl2',t.vCl||'Contract');
+  s('v-vl1',t.vVl||'Farmer Verified'); s('v-vl2',t.vVl||'Farmer Verified');
+  s('v-sl1',t.vSl||'Storage Since'); s('v-sl2',t.vSl||'Storage Since');
+  s('v-hl1',t.vHl||'Self-Heal Events'); s('v-hl2',t.vHl||'Self-Heal Events');
+  // vendor cert dates (translate month names)
+  const d1=document.getElementById('v-date1');if(d1)d1.textContent=t.vDate1||'March 01, 2026';
+  const d2=document.getElementById('v-date2');if(d2)d2.textContent=t.vDate2||'Feb 25, 2026';
+  // farmer incoming bids panel
+  s('f-other-bids-lbl', t.fOtherBids||'OTHER BIDS');
+  s('f-your-batch', t.fYourBatch||'YOUR BATCH');
+  s('f-farmer-name', t.fFarmerName||'Ramesh Patil');
+  s('fb-lbl1', t.fTopBid||'TOP BID RECEIVED');
+  s('fb-other1', (t.vTrader2||'FreshMart')+': ₹26/kg   |   5 '+(t.vMinsAgo||'min ago'));
+  const fb1=document.getElementById('fb-btn1'); if(fb1&&!fb1.disabled) fb1.textContent=t.fAcceptBtn||'✅ ACCEPT BID';
+  s('v-pill1',t.vLive);
+}
+
+// Update MQ-135 live gas table from ESP32 gasLevel
+function updateGasTable(rawGasLevel) {
+  // MQ-135 outputs a 0-100 scaled value from ESP32
+  // Derive individual gas estimates using known sensitivity ratios
+  const nh3  = (rawGasLevel * 0.45).toFixed(1);
+  const co2  = (rawGasLevel * 12.5).toFixed(0);
+  const h2s  = (rawGasLevel * 0.06).toFixed(2);
+
+  function setLive(id, statId, val, limit, unit) {
+    const el = document.getElementById(id);
+    const st = document.getElementById(statId);
+    if (el) el.textContent = val + ' ' + unit;
+    if (st) {
+      const num = parseFloat(val);
+      if (num < limit * 0.6) {
+        st.textContent = (T[lang]&&T[lang].mqSafe)||'✓ SAFE'; st.className = 'pill pill-high'; st.style.background='rgba(34,197,94,0.15)'; st.style.color='var(--green)';
+      } else if (num < limit) {
+        st.textContent = (T[lang]&&T[lang].mqWatch)||'⚠ WATCH'; st.className = 'pill pill-med'; st.style.background='rgba(251,191,36,0.15)'; st.style.color='var(--yellow)';
+      } else {
+        st.textContent = (T[lang]&&T[lang].mqAlert)||'✗ ALERT'; st.className = 'pill pill-low'; st.style.background='rgba(239,68,68,0.15)'; st.style.color='var(--red)';
+      }
+    }
+  }
+  setLive('live-nh3',  'stat-nh3',  nh3,  30,   'ppm');
+  setLive('live-co2',  'stat-co2',  co2,  1000, 'ppm');
+  setLive('live-h2s',  'stat-h2s',  h2s,  5,    'ppm');
+}
+
+function setLang(l,btn){lang=l;document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');applyT();}
+function login(r){
+  role=r;
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appHeader').style.display='flex';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+r).classList.add('active');
+  document.getElementById('hdr-role').className='h-role '+r;
+  applyT();
+  setInterval(()=>document.getElementById('clock').textContent=new Date().toLocaleTimeString(),1000);
+  fetchLive();
+  if (r === 'farmer') setTimeout(refreshFarmerBidPanel, 100);
+  document.getElementById('demo-reset-btn').style.display='block';
+}
+function logout(){document.getElementById('demo-reset-btn').style.display='none';role=null;document.getElementById('loginScreen').style.display='flex';document.getElementById('appHeader').style.display='none';document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));}
+function updateUI(){
+  const t=T[lang],h=state.health,tmp=state.temp,hum=state.humidity,gas=state.gas;
+  const offset=377-(h/100)*377,color=h>=80?'#22c55e':h>=60?'#f59e0b':'#ef4444';
+  const gf=document.getElementById('gaugeFill');if(gf){gf.style.strokeDashoffset=offset;gf.style.stroke=color;}
+  const hn=document.getElementById('healthNum');if(hn){hn.textContent=Math.round(h);hn.style.color=color;}
+  const rt=document.getElementById('riskTag');if(rt){rt.textContent=h>=80?t.riskLow:h>=60?t.riskMed:t.riskHigh;rt.className='risk-tag '+(h>=80?'risk-low':h>=60?'risk-med':'risk-high');}
+  const auc=document.getElementById('auctionStatus');if(auc){auc.textContent=h>=80?'OPEN ✓':'CLOSED ✗';auc.className=h>=80?'c-open':'c-closed';}
+  const sv=(id,v,bid,pct,c)=>{const e=document.getElementById(id);if(e){e.textContent=v;e.style.color=c;}const b=document.getElementById(bid);if(b){b.style.width=pct+'%';b.style.background=c;}};
+  sv('tempVal',tmp.toFixed(1),'tempBar',(tmp/40)*100,tmp>28?'#ef4444':tmp>25?'#f59e0b':'#3b82f6');
+  sv('humVal',hum.toFixed(1),'humBar',hum,hum>80?'#ef4444':hum>75?'#f59e0b':'#22c55e');
+  // Gas card: red>30ppm (threshold), yellow>20ppm (caution), green otherwise — matches MQ-135 table
+  sv('gasVal',gas.toFixed(1),'gasBar',(gas/90)*100,gas>30?'#ef4444':gas>20?'#f59e0b':'#22c55e');
+  document.getElementById('tempBox').className='sb'+(tmp>28?' danger':tmp>25?' warn':'');
+  document.getElementById('humBox').className='sb'+(hum>80?' danger':hum>75?' warn':'');
+  document.getElementById('gasBox').className='sb'+(gas>30?' danger':gas>20?' warn':'');
+  const sl=document.getElementById('shelfDays');if(sl)sl.textContent=state.shelfLife;
+  const sf=document.getElementById('shelfFill');if(sf)sf.style.width=(state.shelfLife/14*100)+'%';
+  // Fan: driven by healState.fan set in checkSelfHealing()
+  if(state.fanActive){fanAngle+=15;const fi=document.getElementById('fanIcon');if(fi)fi.style.transform=`rotate(${fanAngle}deg)`;const fb=document.getElementById('fanBox');if(fb)fb.classList.add('active');const badge=document.getElementById('fanBadge');if(badge){badge.textContent=t.fanOn;badge.className='abadge bon';}}
+  else{const fb=document.getElementById('fanBox');if(fb)fb.classList.remove('active');const badge=document.getElementById('fanBadge');if(badge){badge.textContent=t.fanOff;badge.className='abadge boff';}}
+  // Neem vapor: driven by healState.neem set in checkSelfHealing()
+  const neemActive = healState.neem;
+  const neemBox=document.getElementById('neemBox');const neemBadge=document.getElementById('neemBadge');
+  if(neemBox){neemBox.className='abox'+(neemActive?' active':'');}
+  if(neemBadge){neemBadge.textContent=neemActive?t.fanOn:t.fanOff;neemBadge.className='abadge '+(neemActive?'bon':'boff');}
+  // Log neem activation only when it turns ON (not every tick)
+  if(neemActive && !prevNeem){
+    addLog('🌿 Neem Vapor activated — Anti-fungal protection ON','heal');
+    addChain('NEEM_ACTIVATED','Anti-fungal vapour ON');
+  }
+  updateUI._prevNeem = neemActive;
+  const s2=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  s2('v-health',Math.round(h)+'%');s2('v-shelf',state.shelfLife);s2('v-temp',tmp.toFixed(1));s2('v-hum',hum.toFixed(1));s2('v-gas',Math.round(gas));
+  s2('v-health1',Math.round(h));
+  const vg=document.getElementById('v-gate'),vp=document.getElementById('v-pill1'),va=document.getElementById('v-hstatus');
+  if(h>=80){if(vg){vg.textContent='Health '+Math.round(h)+'% ✓';vg.style.color='var(--green)';}if(vp){vp.textContent=t.vLive;vp.className='bpill bp-live';}if(va){va.textContent='⛓ '+t.auctionLbl+' OPEN ✓';va.style.color='var(--green)';}}
+  else{if(vg){vg.textContent='Health '+Math.round(h)+'% ✗';vg.style.color='var(--red)';}if(vp){vp.textContent=t.riskHigh;vp.className='bpill bp-med';}if(va){va.textContent='⛓ '+t.auctionLbl+' CLOSED';va.style.color='var(--red)';}}
+}
+function drawChart(){
+  const canvas=document.getElementById('healthChart');if(!canvas)return;
+  const ctx=canvas.getContext('2d');canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;
+  const w=canvas.width,h=canvas.height;if(state.history.health.length<2)return;
+  ctx.clearRect(0,0,w,h);
+  const dl=(arr,color,max)=>{ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;arr.forEach((v,i)=>{const x=(i/(arr.length-1))*w,y=h-(v/max)*h*0.85-h*0.05;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.stroke();};
+  dl(state.history.health,'#22c55e',100);dl(state.history.humidity,'#3b82f6',100);dl(state.history.temp.map(v=>v/2),'#f59e0b',50);
+}
+function simulate(){
+  if(anomaly){
+    state.humidity = Math.min(92, state.humidity + (Math.random()*3 + 1));
+    state.gas      = Math.min(85, state.gas      + (Math.random()*5 + 3));
+  } else {
+    // Normal: gas 20–25ppm (safe, threshold=30), humidity 63–69% (safe, threshold=75)
+    state.temp     = 24 + Math.sin(Date.now()/10000)*2 + (Math.random()-0.5)*0.3;
+    state.humidity = 66 + Math.sin(Date.now()/8000)*3  + (Math.random()-0.5)*0.4;
+    state.gas      = 20 + Math.random()*5;
+  }
+  updateGasTable(state.gas);
+  state.health   = 100 - Math.max(0,(state.humidity-65)*1.5) - Math.max(0,(state.temp-25)*2) - Math.max(0,(state.gas-30)*0.8);
+  state.health   = Math.max(0, Math.min(100, state.health));
+  // Fan: gas>30ppm OR humidity>75% — matches thresholds shown in UI
+  state.fanActive = state.humidity > 75 || state.gas > 30;
+  state.shelfLife = Math.max(0, Math.round((state.health/100)*14));
+  state.history.health.push(state.health);
+  state.history.humidity.push(state.humidity);
+  state.history.temp.push(state.temp*2);
+  if(state.history.health.length>20){state.history.health.shift();state.history.humidity.shift();state.history.temp.shift();}
+}
+// ── SELF-HEALING STATE TRACKER ─────────────────────────────────
+// Tracks previous actuator states so logs fire only on change, not every tick
+const healState = { fan: false, neem: false, anomaly: false };
+
+function checkSelfHealing() {
+  const _t = T[lang]||T['en'];
+  const gas = state.gas;
+  const hum = state.humidity;
+
+  // ── FAN: activates when gas>30ppm OR humidity>75%
+  const fanShouldBeOn = gas > 30 || hum > 75;
+  if (fanShouldBeOn && !healState.fan) {
+    healState.fan = true;
+    addLog(_t.logFanOn||'⚡ Fan activated — Reducing rot gas', 'heal');
+    addChain(_t.chainFanOn||'FAN_ACTIVATED', _t.chainVentOn||'Ventilation ON');
+  } else if (!fanShouldBeOn && healState.fan) {
+    healState.fan = false;
+    addLog('✓ Fan deactivated — Conditions normal', 'heal');
+  }
+  state.fanActive = fanShouldBeOn;
+
+  // ── NEEM VAPOR: activates when gas>60ppm (severe fungal risk)
+  const neemShouldBeOn = gas > 60;
+  if (neemShouldBeOn && !healState.neem) {
+    healState.neem = true;
+    addLog('🌿 Neem Vapor activated — Anti-fungal protection ON', 'heal');
+    addChain('NEEM_ACTIVATED', 'Anti-fungal vapour ON');
+  } else if (!neemShouldBeOn && healState.neem) {
+    healState.neem = false;
+    addLog('✓ Neem Vapor deactivated — Gas levels safe', 'heal');
+  }
+
+  // ── ANOMALY DETECTION: log warning when both gas AND humidity cross threshold
+  const isAnomaly = gas > 30 && hum > 75;
+  if (isAnomaly && !healState.anomaly) {
+    healState.anomaly = true;
+    addLog(_t.logAnomaly||'⚠ ANOMALY — High humidity + NH₃ spike!', 'warn');
+    addChain(_t.chainAnomaly||'ANOMALY_DETECTED', _t.chainSelfHeal||'Self-heal triggered');
+  } else if (!isAnomaly && healState.anomaly) {
+    healState.anomaly = false;
+  }
+}
+
+async function fetchLive(){
+  if(!role)return;
+  try{
+    const res=await fetch(SERVER);
+    const data=await res.json();
+    if(data&&!data.error){
+      // ── ESP32 CONNECTED: use real sensor values
+      state.temp     = data.temperature;
+      state.humidity = data.humidity;
+      state.gas      = data.gasLevel;
+      state.health   = data.healthScore;
+      state.shelfLife= Math.max(0,Math.round((data.healthScore/100)*14));
+      updateGasTable(data.gasLevel);
+      state.history.health.push(state.health);
+      state.history.humidity.push(state.humidity);
+      state.history.temp.push(state.temp*2);
+      if(state.history.health.length>20){state.history.health.shift();state.history.humidity.shift();state.history.temp.shift();}
+      if(!usingLive){
+        usingLive=true;
+        addLog((T[lang]||T['en']).logESP32||'✅ ESP32 LIVE — Real sensor data active!','heal');
+        addChain('ESP32_CONNECTED','Sensor stream active');
+        const src=document.getElementById('v-source');if(src){src.textContent='⚡ LIVE ESP32 DATA';src.style.color='var(--green)';}
+        const hl=document.getElementById('hdr-live');if(hl){hl.textContent='⚡ ESP32 LIVE';hl.style.color='var(--green)';}
+        const eb=document.getElementById('v-esp32-badge');if(eb){eb.textContent='⚡ ESP32 Connected';eb.style.background='rgba(34,197,94,0.1)';eb.style.border='1px solid rgba(34,197,94,0.25)';eb.style.color='var(--green)';}
+      }
+    } else {
+      // ── ESP32 NOT CONNECTED: use simulation
+      if(usingLive){
+        usingLive=false;
+        addLog((T[lang]||T['en']).logESP32off||'⚠ ESP32 disconnected — simulation mode','warn');
+        const hl=document.getElementById('hdr-live');if(hl){hl.textContent='◌ SIMULATED';hl.style.color='var(--yellow)';}
+        const eb=document.getElementById('v-esp32-badge');if(eb){eb.textContent='✗ ESP32 Offline';eb.style.background='rgba(239,68,68,0.1)';eb.style.border='1px solid rgba(239,68,68,0.25)';eb.style.color='#ef4444';}
+      }
+      simulate();
+    }
+  } catch(e){
+    if(usingLive){
+      usingLive=false;
+      const hl=document.getElementById('hdr-live');if(hl){hl.textContent='◌ SIMULATED';hl.style.color='var(--yellow)';}
+      const eb=document.getElementById('v-esp32-badge');if(eb){eb.textContent='✗ ESP32 Offline';eb.style.background='rgba(239,68,68,0.1)';eb.style.border='1px solid rgba(239,68,68,0.25)';eb.style.color='#ef4444';}
+    }
+    simulate();
+  }
+  // ── Both modes: check thresholds and fire self-heal logs based on actual values
+  checkSelfHealing();
+  updateUI();
+  drawChart();
+}
+function addLog(msg,type='info'){const feed=document.getElementById('logFeed');if(!feed)return;const item=document.createElement('div');item.className='log-item';item.innerHTML=`<span class="log-time">${new Date().toLocaleTimeString()}</span><span class="log-msg log-${type}">${msg}</span>`;feed.insertBefore(item,feed.firstChild);while(feed.children.length>10)feed.removeChild(feed.lastChild);}
+function addChain(type,detail){const feed=document.getElementById('chainFeed');if(!feed)return;const hash='0x'+Math.random().toString(16).substr(2,6)+'...'+Math.random().toString(16).substr(2,4);const item=document.createElement('div');item.className='chain-item';const t2=T[lang]||T['en'];item.innerHTML=`<div class="chain-hash">${hash} → ${type}</div><div class="chain-meta"><span>${detail}</span><span class="chain-ok">${t2.chainConfirmed||'✓ CONFIRMED'}</span></div>`;feed.insertBefore(item,feed.firstChild);while(feed.children.length>4)feed.removeChild(feed.lastChild);}
+function triggerAnomaly(){
+  if(anomaly) return;
+  anomaly=true;
+  // Force values into alert zone — checkSelfHealing() will detect and log
+  state.humidity=82; state.gas=72; state.temp=26.5;
+  updateGasTable(state.gas);
+  checkSelfHealing();
+  updateUI();
+}
+function resetSystem(){
+  const _t=T[lang]||T['en'];
+  anomaly=false;
+  healState.fan=false; healState.neem=false; healState.anomaly=false;
+  state.humidity=66; state.temp=24; state.gas=22; state.fanActive=false;
+  updateGasTable(state.gas);
+  updateUI();
+  addLog(_t.logReset||'✓ System reset — Normal conditions restored','heal');
+  addChain(_t.chainNorm||'SYSTEM_NORMALIZED',_t.chainHRestored||'Health restored');
+}
+
+// ── SHARED BID STORE ──────────────────────────────────────────
+// All bids stored here — vendor writes, farmer reads live
+const bidStore = {
+  'BATCH-001': [],
+  'BATCH-002': []
+};
+// Pre-populate with demo bids so farmer panel isn't empty on load
+bidStore['BATCH-001'].push({vendor:'vTrader1', amount:28, qty:400, total:11200, minsAgo:2, accepted:false});
+bidStore['BATCH-001'].push({vendor:'vTrader2', amount:26, qty:300, total:7800,  minsAgo:5, accepted:false});
+bidStore['BATCH-002'].push({vendor:'vTrader3', amount:22, qty:500, total:11000, minsAgo:8, accepted:false});
+
+function calcTotal(n){
+  const price = parseFloat(document.getElementById('bidInput'+n).value)||0;
+  const qty   = parseFloat(document.getElementById('qtyInput'+n).value)||0;
+  const box   = document.getElementById('total-box'+n);
+  const amt   = document.getElementById('total-amt'+n);
+  const t = T[lang]||T['en'];
+  if(price>0 && qty>0){
+    const total = price * qty;
+    if(box)  box.style.display='flex';
+    if(amt)  amt.textContent = '₹'+total.toLocaleString('en-IN');
+  } else {
+    if(box) box.style.display='none';
+  }
+}
+
+function renderBidFeed(feedId, bids){
+  const feed = document.getElementById(feedId);
+  if(!feed) return;
+  const sorted = [...bids].sort((a,b) => b.amount - a.amount);
+  const medals = ['🥇','🥈','🥉'];
+  feed.innerHTML = sorted.map((b,i)=>{
+    const _t = T[lang]||T['en'];
+    const name = _t[b.vendor] || b.vendor;
+    const isMe = b.vendor === (_t.vYourBid||'Your Bid') || b.vendor === 'vYourBid';
+    const rank = medals[i] || `${i+1}`;
+    const qtyStr = b.qty ? `${b.qty}kg` : '—';
+    const totalStr = b.qty ? `₹${(b.amount*b.qty).toLocaleString('en-IN')}` : '';
+    const timeStr = b.minsAgo > 0 ? `${b.minsAgo}m` : 'now';
+    return `<div class="vbid-entry${isMe?' my-bid':''}">
+      <span class="vbid-rank">${rank}</span>
+      <span class="vbid-name"${isMe?' style="color:#818cf8"':''}>${isMe?'✓ You':name}</span>
+      <span class="vbid-price">₹${b.amount}/kg</span>
+      <span class="vbid-qty">${qtyStr}</span>
+      <span class="vbid-total" style="color:${isMe?'#818cf8':'var(--green)'}">${totalStr}</span>
+      <span class="vbid-time">${timeStr}</span>
+    </div>`;
+  }).join('');
+}
+
+function placeBid(batch, inputId, qtyId, feedId) {
+  const val = parseFloat(document.getElementById(inputId).value);
+  const qty = parseFloat(document.getElementById(qtyId).value);
+  const _t = T[lang] || T['en'];
+  if (!val || val < 1) { alert('Enter a valid price per kg!'); return; }
+  if (!qty || qty < 1) { alert('Enter quantity in kg!'); return; }
+  const total = val * qty;
+
+  // Add to store with a special key to identify "my bid"
+  bidStore[batch].unshift({vendor:'vYourBid', amount: val, qty: qty, total: total, minsAgo: 0, accepted: false});
+
+  // Re-render feed sorted highest first
+  renderBidFeed(feedId, bidStore[batch]);
+
+  document.getElementById(inputId).value = '';
+  document.getElementById(qtyId).value = '';
+  const n = feedId.slice(-1);
+  const box = document.getElementById('total-box'+n);
+  if(box) box.style.display = 'none';
+
+  if (batch === 'BATCH-001') refreshFarmerBidPanel();
+
+  addChain((_t.chainBidPlaced||'BID_PLACED'), `${batch} · ₹${val}/kg × ${qty}kg = ₹${total.toLocaleString('en-IN')}`);
+  addLog((_t.logNewBid||'💰 New bid')+' ₹'+val+'/kg × '+qty+'kg = ₹'+total.toLocaleString('en-IN')+' '+(_t.logOnBatch||'on')+' '+batch, 'info');
+}
+
+function refreshFarmerBidPanel() {
+  const _t = T[lang] || T['en'];
+  const bids = bidStore['BATCH-001'];
+  if (!bids || bids.length === 0) return;
+
+  const sorted = [...bids].sort((a,b) => b.amount - a.amount);
+  const top = sorted[0];
+  const others = sorted.slice(1);
+
+  const amtEl = document.getElementById('fb-amount1');
+  const traderEl = document.getElementById('fb-trader1');
+  const btn = document.getElementById('fb-btn1');
+  const resolvedVendor = _t[top.vendor] || top.vendor;
+  if(traderEl) traderEl.textContent = resolvedVendor;
+  if(btn && !btn.disabled) btn.textContent = _t.fAcceptBtn || '✅ ACCEPT BID';
+
+  // Show price × qty = total
+  if(amtEl){
+    if(top.qty){
+      amtEl.innerHTML = `₹${top.amount}/kg &nbsp;×&nbsp; ${top.qty}kg &nbsp;= <span style="color:var(--green);font-size:16px;font-weight:700"> ₹${(top.amount*top.qty).toLocaleString('en-IN')}</span>`;
+    } else {
+      amtEl.textContent = '₹' + top.amount + '/kg';
+    }
+  }
+
+  const otherEl = document.getElementById('fb-other1');
+  if(otherEl){
+    if(others.length > 0){
+      otherEl.innerHTML = others.map(b => {
+        const vn = _t[b.vendor] || b.vendor;
+        const totalStr = b.qty ? ` = ₹${(b.amount*b.qty).toLocaleString('en-IN')}` : '';
+        const qtyStr = b.qty ? ` × ${b.qty}kg` : '';
+        return `<span style="color:var(--muted)">${vn}: <span style="color:var(--yellow)">₹${b.amount}/kg${qtyStr}${totalStr}</span> | ${b.minsAgo} ${_t.vMinsAgo||'min ago'}</span>`;
+      }).join('<br>');
+    } else {
+      otherEl.textContent = '';
+    }
+  }
+
+  // Flash the panel to show update
+  const panel = document.getElementById('farmer-bid-feed');
+  if (panel) {
+    panel.style.transition = 'background 0.3s';
+    panel.style.background = 'rgba(34,197,94,0.08)';
+    setTimeout(() => { panel.style.background = ''; }, 800);
+  }
+}
+
+
+function farmerAccept(batch, statusId, btnId) {
+  const t = T[lang] || T['en'];
+  const btn = document.getElementById(btnId);
+  const statusEl = document.getElementById(statusId);
+  if (btn) { btn.disabled=true; btn.style.opacity='0.4'; btn.style.cursor='default'; btn.textContent='✅ Done'; }
+  if (statusEl) { statusEl.textContent = t.fAccepted || '✅ Accepted! Payment released to your wallet'; }
+  addChain(t.chainSaleConf||'SALE_CONFIRMED', batch + ' · ' + (t.fPaymentReleased || 'Payment auto-released to farmer'));
+  addLog('💰 ' + (t.fSoldMsg || 'SOLD — Payment sent to your wallet!'), 'heal');
+
+  // ── Update vendor "awaiting" → confirmed ──
+  const awaitEl = document.getElementById('v-await1');
+  if (awaitEl) {
+    awaitEl.textContent = t.fDealDone || '✅ Deal Confirmed by Farmer';
+    awaitEl.parentElement.style.background='rgba(34,197,94,0.1)';
+    awaitEl.parentElement.style.borderColor='rgba(34,197,94,0.4)';
+    awaitEl.parentElement.style.color='var(--green)';
+  }
+
+  // ── Show vendor notification banner ──
+  const notif = document.getElementById('v-notify1');
+  if (notif) {
+    notif.style.display = 'block';
+    document.getElementById('v-notify-title').textContent = t.vNotifTitle || '🔔 DEAL CLOSED';
+    document.getElementById('v-notify-msg').textContent   = t.vNotifMsg   || 'Farmer has accepted another bid. This batch is no longer available.';
+    document.getElementById('v-notify-sub').textContent   = t.vNotifSub   || 'Check other available batches below ↓';
+  }
+
+  // ── Grey out the batch card on vendor page ──
+  const batch1card = document.getElementById('v-batch1-card');
+  if (batch1card) {
+    batch1card.style.opacity = '0.5';
+    batch1card.style.pointerEvents = 'none';
+    const pill = document.getElementById('v-pill1');
+    if (pill) { pill.textContent = t.vSoldOut||'SOLD'; pill.className='bpill'; pill.style.background='rgba(239,68,68,0.2)'; pill.style.color='#ef4444'; pill.style.border='1px solid rgba(239,68,68,0.4)'; }
+  }
+}
+
+
+function demoReset() {
+  // Reset bid store
+  bidStore['BATCH-001'] = [];
+  bidStore['BATCH-002'] = [];
+  bidStore['BATCH-001'].push({vendor:'vTrader1', amount:28, minsAgo:2, accepted:false});
+  bidStore['BATCH-001'].push({vendor:'vTrader2', amount:26, minsAgo:5, accepted:false});
+  bidStore['BATCH-002'].push({vendor:'vTrader3', amount:22, minsAgo:8, accepted:false});
+
+  // Reset accept button
+  const btn = document.getElementById('fb-btn1');
+  if (btn) { btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer'; }
+  const st = document.getElementById('fb-status1');
+  if (st) st.textContent = '';
+
+  // Reset vendor notification
+  const notif = document.getElementById('v-notify1');
+  if (notif) notif.style.display = 'none';
+
+  // Reset vendor batch card
+  const bc = document.getElementById('v-batch1-card');
+  if (bc) { bc.style.opacity='1'; bc.style.pointerEvents='auto'; }
+  const pill = document.getElementById('v-pill1');
+  if (pill) { const t=T[lang]||T['en']; pill.textContent=t.vLive||'LIVE ●'; pill.className='bpill bp-live'; pill.style.background=''; pill.style.color=''; pill.style.border=''; }
+
+  // Reset awaiting text
+  const aw = document.getElementById('v-await1');
+  if (aw) {
+    const t=T[lang]||T['en'];
+    aw.textContent = t.fAwait||'⏳ Awaiting Farmer Approval';
+    aw.parentElement.style.background='rgba(251,191,36,0.08)';
+    aw.parentElement.style.borderColor='rgba(251,191,36,0.3)';
+    aw.parentElement.style.color='var(--yellow)';
+  }
+
+  // Reset bid feeds on vendor page
+  const bf1 = document.getElementById('bids1'); if(bf1) bf1.innerHTML='';
+  const bf2 = document.getElementById('bids2'); if(bf2) bf2.innerHTML='';
+
+  // Reset chain feed and log feed
+  const cf = document.getElementById('chainFeed');
+  if (cf) cf.innerHTML = '';
+  const lf = document.getElementById('logFeed');
+  if (lf) lf.innerHTML = '';
+
+  // Reset anomaly state
+  anomaly = false;
+  healState.fan=false; healState.neem=false; healState.anomaly=false;
+  updateUI._prevNeem = false;
+  state.humidity=68; state.temp=24; state.gas=22; state.health=87; state.fanActive=false;
+
+  // Re-init blockchain log
+  applyT();
+  refreshFarmerBidPanel();
+  addLog((T[lang]||T['en']).logReset||'✓ System reset — demo ready', 'heal');
+
+}
+
+function confirmSale(batch){if(!confirm(`Confirm purchase of ${batch}?\nRecorded on blockchain.`))return;addChain('SALE_CONFIRMED',`${batch} · Payment to farmer`);addLog(`✅ ${batch} sold! Payment released`,'heal');alert(`✅ Confirmed!\n${batch} on blockchain.\nPayment auto-released to farmer.`);}
+
+// ── FARMER CAMERA ───────────────────────────────────────
+document.getElementById('farmerFileInput').addEventListener('change', function(){
+  const file = this.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const dataUrl = e.target.result;
+    // Show on farmer page
+    const img = document.getElementById('farmerCamImg');
+    const ph  = document.getElementById('farmerCamPlaceholder');
+    const ov  = document.getElementById('farmerCamOverlay');
+    const st  = document.getElementById('f-cam-status');
+    const ts  = document.getElementById('f-cam-ts');
+    img.src = dataUrl; img.style.display = 'block';
+    ph.style.display = 'none';
+    ov.style.display = 'block';
+    st.textContent = '● LIVE'; st.className = 'cam-status live';
+    ts.textContent = new Date().toLocaleTimeString();
+    // Send to server so vendor sees it too
+    fetch(IMAGE_SERVER, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({image: dataUrl})
+    }).then(()=>{ addLog('📷 Crate photo sent to vendors','heal'); })
+      .catch(err=>{ console.error('Upload failed:',err); });
+  };
+  reader.readAsDataURL(file);
+  this.value = '';
+});
+
+async function fetchImage(){
+  try{
+    const res = await fetch(IMAGE_SERVER);
+    const data = await res.json();
+    if(data.hasImage && data.image){
+      const src = 'data:image/jpeg;base64,'+data.image;
+      const ts  = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
+      // Farmer page panel
+      const fImg=document.getElementById('farmerCamImg');
+      const fPh=document.getElementById('farmerCamPlaceholder');
+      const fOv=document.getElementById('farmerCamOverlay');
+      const fSt=document.getElementById('f-cam-status');
+      const fTs=document.getElementById('f-cam-ts');
+      if(fImg&&fImg.style.display==='none'){
+        fImg.src=src; fImg.style.display='block';
+        if(fPh) fPh.style.display='none';
+        if(fOv) fOv.style.display='block';
+        if(fSt){fSt.textContent='● LIVE';fSt.className='cam-status live';}
+        if(fTs) fTs.textContent=ts;
+      }
+      // Vendor BATCH-001 in-card panel
+      const v1Img=document.getElementById('vc1-img');
+      const v1Ph=document.getElementById('vc1-ph');
+      const v1Ov=document.getElementById('vc1-ov');
+      const v1St=document.getElementById('vc1-status');
+      const v1Ts=document.getElementById('vc1-ts');
+      if(v1Img){v1Img.src=src; v1Img.style.display='block';}
+      if(v1Ph)  v1Ph.style.display='none';
+      if(v1Ov)  v1Ov.style.display='block';
+      if(v1St){v1St.textContent='● LIVE';v1St.style.color='var(--green)';}
+      if(v1Ts)  v1Ts.textContent=ts;
+      // Vendor BATCH-002 in-card panel (same image for demo — different farmer would have own server endpoint)
+      const v2Img=document.getElementById('vc2-img');
+      const v2Ph=document.getElementById('vc2-ph');
+      const v2Ov=document.getElementById('vc2-ov');
+      const v2St=document.getElementById('vc2-status');
+      const v2Ts=document.getElementById('vc2-ts');
+      if(v2Img){v2Img.src=src; v2Img.style.display='block';}
+      if(v2Ph)  v2Ph.style.display='none';
+      if(v2Ov)  v2Ov.style.display='block';
+      if(v2St){v2St.textContent='● LIVE';v2St.style.color='var(--green)';}
+      if(v2Ts)  v2Ts.textContent=ts;
+    }
+  }catch(e){}
+}
+for(let i=0;i<10;i++){state.history.health.push(85+(Math.random()-0.5)*10);state.history.humidity.push(65+(Math.random()-0.5)*10);state.history.temp.push(48+(Math.random()-0.5)*8);}
+applyT();
+setInterval(fetchLive,2000);
+setInterval(fetchImage,3000);
+setInterval(()=>{if(role&&Math.random()>0.7){const _t=T[lang]||T['en'];addChain(_t.chainBatchLogged||'HEALTH_LOGGED',(_t.chainHealth||'Health')+': '+Math.round(state.health)+'%');}},15000);
+renderBidFeed('bids1', bidStore['BATCH-001']);
+renderBidFeed('bids2', bidStore['BATCH-002']);
+window.addEventListener('resize',drawChart);
+
+</script>
+
+  <!-- DEMO RESET — small icon only, no text -->
+  <button id="demo-reset-btn" onclick="demoReset()" title="Reset Demo" style="position:fixed;bottom:20px;right:20px;z-index:9999;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:rgba(15,15,23,0.85);color:rgba(255,255,255,0.5);font-size:16px;cursor:pointer;display:none;backdrop-filter:blur(8px);padding:0;line-height:1;" onmouseover="this.style.color='#fff';this.style.borderColor='rgba(255,255,255,0.4)'" onmouseout="this.style.color='rgba(255,255,255,0.5)';this.style.borderColor='rgba(255,255,255,0.15)'">↺</button>
+</body>
+</html>
